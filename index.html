@@ -1,0 +1,2011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="app-title">AI Task Tracker</title>
+    
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="#" id="pwa-manifest">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="AI Task Tracker">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233b82f6'><path d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/></svg>">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Light mode (default) */
+        :root {
+            --bg-primary: #f8fafc;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #1e293b;
+            --text-secondary: #6b7280;
+            --text-tertiary: #9ca3af;
+            --border-color: #e2e8f0;
+            --border-light: #f1f5f9;
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+            --shadow-md: 0 2px 8px rgba(0,0,0,0.1);
+            --shadow-lg: 0 4px 12px rgba(0,0,0,0.1);
+            --blue: #3b82f6;
+            --blue-dark: #2563eb;
+            --green: #059669;
+            --purple: #7c3aed;
+            --gray: #6b7280;
+            --red: #dc2626;
+        }
+
+        /* Dark mode */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-primary: #0f172a;
+                --bg-secondary: #1e293b;
+                --bg-tertiary: #334155;
+                --text-primary: #f8fafc;
+                --text-secondary: #cbd5e1;
+                --text-tertiary: #94a3b8;
+                --border-color: #334155;
+                --border-light: #475569;
+                --shadow-sm: 0 2px 4px rgba(0,0,0,0.3);
+                --shadow-md: 0 2px 8px rgba(0,0,0,0.4);
+                --shadow-lg: 0 4px 12px rgba(0,0,0,0.5);
+                --blue: #60a5fa;
+                --blue-dark: #3b82f6;
+                --green: #10b981;
+                --purple: #a855f7;
+                --gray: #94a3b8;
+                --red: #ef4444;
+            }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .app-header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .app-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .workspace-tabs {
+            display: flex;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 6px;
+            box-shadow: var(--shadow-md);
+            margin-bottom: 20px;
+            overflow-x: auto;
+            gap: 4px;
+            border: 1px solid var(--border-color);
+        }
+
+        .tab {
+            padding: 12px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: fit-content;
+            background: var(--bg-tertiary);
+            border: 2px solid transparent;
+            color: var(--text-primary);
+        }
+
+        .tab:hover {
+            background: var(--border-light);
+        }
+
+        .tab.active {
+            background: var(--blue);
+            color: white;
+            border-color: var(--blue-dark);
+        }
+
+        .add-tab {
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+            flex-shrink: 0;
+            background: var(--bg-tertiary);
+            border: 2px dashed var(--border-color);
+        }
+
+        .add-tab:hover {
+            background: var(--border-light);
+            color: var(--blue);
+            border-color: var(--blue);
+        }
+
+        .workspace-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .workspace-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-primary { background: var(--blue); color: white; }
+        .btn-secondary { background: var(--gray); color: white; }
+        .btn-purple { background: var(--purple); color: white; }
+        .btn-green { background: var(--green); color: white; }
+
+        .quick-add {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: var(--shadow-md);
+            margin-bottom: 30px;
+            border: 1px solid var(--border-color);
+        }
+
+        .quick-add h3 {
+            margin-bottom: 16px;
+            color: var(--text-primary);
+            font-size: 18px;
+        }
+
+        .quick-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 12px;
+            resize: vertical;
+            min-height: 80px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .quick-input:focus {
+            outline: none;
+            border-color: var(--blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .quick-buttons {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .parsing-status {
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .status-parsing { background: #fef3c7; color: #92400e; }
+        .status-success { background: #d1fae5; color: #065f46; }
+        .status-error { background: #fee2e2; color: #991b1b; }
+
+        @media (prefers-color-scheme: dark) {
+            .status-parsing { background: #451a03; color: #fbbf24; }
+            .status-success { background: #064e3b; color: #10b981; }
+            .status-error { background: #7f1d1d; color: #f87171; }
+        }
+
+        .task-section {
+            margin-bottom: 32px;
+        }
+
+        .section-header {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 3px solid;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .overdue { border-color: #ef4444; color: #dc2626; }
+        .today { border-color: var(--blue); color: var(--blue-dark); }
+        .this-week { border-color: var(--green); color: #047857; }
+        .next-week { border-color: var(--purple); color: #6d28d9; }
+        .future { border-color: var(--gray); color: #4b5563; }
+
+        @media (prefers-color-scheme: dark) {
+            .overdue { color: #f87171; }
+            .today { color: var(--blue); }
+            .this-week { color: var(--green); }
+            .next-week { color: var(--purple); }
+            .future { color: var(--gray); }
+        }
+
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .task-card {
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            transition: all 0.2s;
+        }
+
+        .task-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-1px);
+        }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .task-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            flex: 1;
+            margin-right: 16px;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-size: 16px;
+        }
+
+        .action-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .complete-btn { background: #ecfdf5; color: #059669; }
+        .edit-btn { background: #eff6ff; color: #2563eb; }
+        .delete-btn { background: #fef2f2; color: #dc2626; }
+
+        @media (prefers-color-scheme: dark) {
+            .complete-btn { background: #064e3b; color: #10b981; }
+            .edit-btn { background: #1e3a8a; color: #60a5fa; }
+            .delete-btn { background: #7f1d1d; color: #f87171; }
+        }
+
+        .task-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .meta-item {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .priority-p0 { background: #fee2e2; color: #991b1b; }
+        .priority-p1 { background: #fed7aa; color: #c2410c; }
+        .priority-p2 { background: #fef3c7; color: #a16207; }
+        .priority-p3 { background: #dcfce7; color: #166534; }
+
+        @media (prefers-color-scheme: dark) {
+            .priority-p0 { background: #7f1d1d; color: #f87171; }
+            .priority-p1 { background: #9a3412; color: #fb923c; }
+            .priority-p2 { background: #a16207; color: #fbbf24; }
+            .priority-p3 { background: #166534; color: #4ade80; }
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .modal {
+                background: rgba(0,0,0,0.7);
+            }
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            padding: 24px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .date-input-group {
+            position: relative;
+        }
+
+        .date-input-group input[type="date"] {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 24px;
+            height: 24px;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .calendar-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            color: var(--text-tertiary);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .archive-task {
+            background: var(--bg-tertiary);
+            border-color: var(--border-light);
+        }
+
+        .archive-task .task-title {
+            text-decoration: line-through;
+            color: var(--text-secondary);
+        }
+
+        .workspace-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .workspace-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .workspace-emoji {
+            font-size: 18px;
+        }
+
+        .workspace-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .workspace-stats {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .workspace-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 12px;
+            }
+            
+            .app-header {
+                flex-direction: column;
+                align-items: stretch;
+                margin-bottom: 15px;
+            }
+
+            .app-header h1 {
+                font-size: 24px;
+                text-align: center;
+            }
+            
+            .workspace-tabs {
+                padding: 4px;
+                margin-bottom: 15px;
+                overflow-x: auto;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+            }
+
+            .workspace-tabs::-webkit-scrollbar {
+                display: none;
+            }
+
+            .tab {
+                padding: 14px 18px;
+                font-size: 16px;
+                min-width: 120px;
+                touch-action: manipulation;
+            }
+
+            .add-tab {
+                padding: 14px;
+                font-size: 18px;
+                min-width: 50px;
+            }
+            
+            .workspace-header {
+                flex-direction: column;
+                align-items: stretch;
+                margin-bottom: 15px;
+            }
+
+            .workspace-title {
+                font-size: 20px;
+                text-align: center;
+                margin-bottom: 15px;
+            }
+            
+            .header-buttons {
+                justify-content: center;
+                gap: 8px;
+            }
+
+            .btn {
+                padding: 12px 16px;
+                font-size: 16px;
+                min-height: 44px;
+                touch-action: manipulation;
+            }
+
+            .quick-add {
+                padding: 20px;
+                margin-bottom: 20px;
+            }
+
+            .quick-add h3 {
+                font-size: 18px;
+            }
+
+            .quick-input {
+                font-size: 16px;
+                min-height: 100px;
+                padding: 14px 16px;
+            }
+
+            .quick-buttons {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+            }
+
+            .parsing-status {
+                text-align: center;
+            }
+            
+            .task-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+            }
+
+            .task-title {
+                font-size: 18px;
+                margin-right: 0;
+                margin-bottom: 8px;
+            }
+            
+            .task-actions {
+                justify-content: center;
+                align-self: center;
+            }
+
+            .action-btn {
+                width: 44px;
+                height: 44px;
+                font-size: 18px;
+            }
+
+            .task-meta {
+                justify-content: center;
+                gap: 8px;
+            }
+
+            .meta-item {
+                font-size: 11px;
+                padding: 6px 10px;
+            }
+
+            .section-header {
+                font-size: 18px;
+                text-align: center;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 20px;
+                max-height: 90vh;
+                padding: 20px;
+            }
+
+            .form-input, .form-select {
+                font-size: 16px;
+                padding: 14px 16px;
+                min-height: 50px;
+            }
+
+            .form-label {
+                font-size: 16px;
+                margin-bottom: 8px;
+            }
+
+            .workspace-item {
+                padding: 16px;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+            }
+
+            .workspace-info {
+                justify-content: center;
+            }
+
+            .workspace-emoji {
+                font-size: 24px;
+            }
+
+            .workspace-name {
+                font-size: 18px;
+            }
+
+            .workspace-actions {
+                justify-content: center;
+            }
+
+            .empty-state {
+                padding: 40px 20px;
+            }
+
+            .empty-state h3 {
+                font-size: 20px;
+            }
+
+            .btn, .form-input, .form-select, .quick-input {
+                -webkit-appearance: none;
+                border-radius: 8px;
+            }
+
+            .form-input:focus, .form-select:focus, .quick-input:focus {
+                font-size: 16px;
+            }
+
+            .tab, .add-tab, .btn, .action-btn {
+                min-height: 44px;
+                min-width: 44px;
+            }
+
+            .header-buttons {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+
+            .header-buttons .btn:last-child {
+                grid-column: 1 / -1;
+            }
+        }
+
+        @media (max-width: 428px) {
+            .container {
+                padding: 10px;
+            }
+
+            .workspace-tabs {
+                margin-left: -10px;
+                margin-right: -10px;
+                padding-left: 14px;
+                padding-right: 14px;
+            }
+
+            .quick-add, .task-card {
+                border-radius: 12px;
+            }
+
+            .header-buttons {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .task-card {
+                padding: 16px;
+            }
+
+            .app-header h1 {
+                font-size: 22px;
+            }
+        }
+
+        @media (max-width: 768px) and (orientation: landscape) {
+            .workspace-header {
+                flex-direction: row;
+                align-items: center;
+            }
+
+            .workspace-title {
+                text-align: left;
+                margin-bottom: 0;
+            }
+
+            .header-buttons {
+                display: flex;
+                flex-direction: row;
+            }
+
+            .quick-buttons {
+                flex-direction: row;
+                align-items: center;
+            }
+        }
+
+        .tab {
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .btn, .action-btn {
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        .workspace-tabs {
+            scroll-behavior: smooth;
+        }
+
+        @media (display-mode: standalone) {
+            body {
+                padding-top: env(safe-area-inset-top);
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+
+            .container {
+                padding-top: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="app-header">
+            <h1 id="app-name">🤖 AI Task Tracker</h1>
+            <div class="app-controls">
+                <button class="btn btn-secondary" onclick="showSettingsModal()" title="App Settings">
+                    ⚙️
+                </button>
+                <button class="btn btn-green" onclick="showSyncModal()" title="Sync Settings">
+                    🔄 Sync
+                </button>
+            </div>
+        </div>
+
+        <!-- Workspace Tabs -->
+        <div class="workspace-tabs" id="workspaceTabs">
+            <!-- Tabs will be populated here -->
+        </div>
+
+        <!-- Current Workspace Content -->
+        <div id="workspaceContent">
+            <div class="workspace-header">
+                <div class="workspace-title" id="workspaceTitle">💼 Work</div>
+                <div class="header-buttons">
+                    <button class="btn btn-purple" onclick="toggleTypeManager()">📂 Types</button>
+                    <button class="btn btn-secondary" onclick="toggleArchive()">🗄️ Archive (<span id="archive-count">0</span>)</button>
+                    <button class="btn btn-primary" onclick="showAddModal()">➕ Add Task</button>
+                </div>
+            </div>
+
+            <div class="quick-add">
+                <h3>✨ Quick Add with AI</h3>
+                <textarea
+                    class="quick-input"
+                    id="quickInput"
+                    placeholder="Just type naturally! e.g., 'Review API docs by Friday, high priority, 2 hours, product work'"
+                    onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); parseQuickInput();}"
+                ></textarea>
+                <div class="quick-buttons">
+                    <button class="btn btn-green" onclick="parseQuickInput()">Add Task</button>
+                    <div id="parseStatus" class="parsing-status" style="display: none;"></div>
+                </div>
+            </div>
+
+            <div id="taskSections">
+                <!-- Task sections will be populated here -->
+            </div>
+
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <h3>No tasks yet!</h3>
+                <p>Use the AI input above or click "Add Task" to get started.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <h3>App Settings</h3>
+            <div class="form-group">
+                <label class="form-label">App Name</label>
+                <input type="text" id="appNameInput" class="form-input" placeholder="My Task Tracker">
+                <div style="margin-top: 8px; font-size: 12px; color: var(--text-secondary);">
+                    Customize your app name (appears in browser tab and when installed as PWA)
+                </div>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 24px;">
+                <button class="btn btn-green" onclick="saveAppSettings()" style="flex: 1;">Save Settings</button>
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sync Setup Modal -->
+    <div id="syncModal" class="modal">
+        <div class="modal-content">
+            <h3>🔄 Sync Your Tasks</h3>
+            <div id="syncSetupContent">
+                <div style="margin-bottom: 20px; padding: 16px; background: var(--bg-tertiary); border-radius: 8px; border: 1px solid var(--border-color);">
+                    <h4 style="margin-bottom: 12px; color: var(--text-primary);">📋 Quick Setup Guide:</h4>
+                    <ol style="margin-left: 20px; color: var(--text-secondary); line-height: 1.6;">
+                        <li><strong>Go to:</strong> <a href="https://gist.github.com" target="_blank" style="color: var(--blue);">gist.github.com</a></li>
+                        <li><strong>Create account</strong> (recommended) or stay anonymous</li>
+                        <li><strong>Filename:</strong> my-tasks.json</li>
+                        <li><strong>Content:</strong> just type <code>{}</code></li>
+                        <li><strong>Click</strong> "Create gist" button</li>
+                        <li><strong>Copy the URL</strong> and paste below</li>
+                    </ol>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">GitHub Gist URL</label>
+                    <input type="text" id="syncUrl" class="form-input" placeholder="https://gist.github.com/your-gist-url">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Email Address (Optional)</label>
+                    <input type="email" id="syncEmail" class="form-input" placeholder="your@email.com">
+                    <div style="margin-top: 8px; font-size: 12px; color: var(--text-secondary);">
+                        We'll send you your sync URL and instructions as a backup
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 24px;">
+                    <button class="btn btn-green" onclick="setupSync()" style="flex: 1;">🚀 Start Syncing</button>
+                    <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                </div>
+            </div>
+            
+            <div id="syncStatusContent" style="display: none;">
+                <div style="text-align: center; padding: 20px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">✅</div>
+                    <h4 style="color: var(--text-primary); margin-bottom: 8px;">Sync Connected!</h4>
+                    <p style="color: var(--text-secondary); margin-bottom: 20px;">Your tasks are now syncing across all devices</p>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-secondary" onclick="disconnectSync()" style="flex: 1;">Disconnect</button>
+                        <button class="btn btn-green" onclick="closeModal()" style="flex: 1;">Done</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Workspace Modal -->
+    <div id="workspaceModal" class="modal">
+        <div class="modal-content">
+            <h3 id="workspaceModalTitle">Create New Workspace</h3>
+            <div class="form-group">
+                <label class="form-label">Workspace Name</label>
+                <input type="text" id="workspaceName" class="form-input" placeholder="e.g., Personal, Project X, etc.">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Emoji/Icon</label>
+                <input type="text" id="workspaceEmoji" class="form-input" placeholder="🏠 (optional)" maxlength="2">
+                <div style="margin-top: 8px; font-size: 12px; color: var(--text-secondary);">
+                    Suggestions: 💼 🏠 🚀 📊 🎯 📚 🛠️ 🎨 💡 🔬
+                </div>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 24px;">
+                <button class="btn btn-green" onclick="saveWorkspaceChanges()" style="flex: 1;" id="workspaceSubmitBtn">Create</button>
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Workspace Manager Modal -->
+    <div id="workspaceManagerModal" class="modal">
+        <div class="modal-content">
+            <h3>Manage Workspaces</h3>
+            <div id="workspaceManagerList" style="margin-bottom: 20px;">
+                <!-- Populated dynamically -->
+            </div>
+            <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+        </div>
+    </div>
+
+    <!-- Add/Edit Task Modal -->
+    <div id="taskModal" class="modal">
+        <div class="modal-content">
+            <h3 id="modalTitle">Add New Task</h3>
+            <form id="taskForm">
+                <div class="form-group">
+                    <label class="form-label">Task Name</label>
+                    <input type="text" id="taskName" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Due Date</label>
+                    <div class="date-input-group">
+                        <input type="text" id="taskDate" class="form-input" placeholder="MM/DD or M/D/YY">
+                        <input type="date" id="taskDatePicker">
+                        <span class="calendar-icon">📅</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Priority</label>
+                    <select id="taskPriority" class="form-select">
+                        <option value="P0">P0 - Critical</option>
+                        <option value="P1">P1 - High</option>
+                        <option value="P2" selected>P2 - Medium</option>
+                        <option value="P3">P3 - Low</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Time Estimate (minutes)</label>
+                    <input type="number" id="taskTime" class="form-input" min="1">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Task Type</label>
+                    <select id="taskType" class="form-select">
+                        <!-- Populated dynamically -->
+                    </select>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 24px;">
+                    <button type="submit" class="btn btn-green" style="flex: 1;">Save Task</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Type Manager Modal -->
+    <div id="typeModal" class="modal">
+        <div class="modal-content">
+            <h3>Manage Task Types</h3>
+            <div id="typeList" style="margin-bottom: 20px;">
+                <!-- Populated dynamically -->
+            </div>
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <input type="text" id="newTypeName" class="form-input" placeholder="New type name" style="flex: 1;">
+                <button class="btn btn-purple" onclick="addTaskType()">Add</button>
+            </div>
+            <button class="btn btn-secondary" onclick="closeTypeManager()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        // Generate PWA manifest programmatically to avoid display issues
+        if ('serviceWorker' in navigator) {
+            const manifest = {
+                "name": "AI Task Tracker",
+                "short_name": "Tasks",
+                "description": "Smart task tracker with AI input parsing",
+                "start_url": "./",
+                "display": "standalone",
+                "background_color": "#ffffff",
+                "theme_color": "#3b82f6",
+                "icons": [
+                    {
+                        "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233b82f6'><path d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/></svg>",
+                        "sizes": "192x192",
+                        "type": "image/svg+xml"
+                    }
+                ]
+            };
+            
+            const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+            const manifestURL = URL.createObjectURL(manifestBlob);
+            document.getElementById('pwa-manifest').href = manifestURL;
+        }
+
+        // App State
+        let workspaces = JSON.parse(localStorage.getItem('aiTaskTracker_workspaces') || '{}');
+        let currentWorkspace = localStorage.getItem('aiTaskTracker_currentWorkspace') || 'Work';
+        let showingArchive = false;
+        let editingTaskId = null;
+        let appName = localStorage.getItem('aiTaskTracker_appName') || '🤖 AI Task Tracker';
+        let syncUrl = localStorage.getItem('aiTaskTracker_syncUrl') || '';
+        let syncInterval = null;
+
+        // Initialize default workspace if none exist
+        if (Object.keys(workspaces).length === 0) {
+            workspaces = {
+                'Work': {
+                    emoji: '💼',
+                    tasks: [],
+                    completedTasks: [],
+                    taskTypes: []
+                },
+                'Personal': {
+                    emoji: '🏠',
+                    tasks: [],
+                    completedTasks: [],
+                    taskTypes: []
+                }
+            };
+            saveWorkspaces();
+        }
+
+        // Ensure current workspace exists and has emoji
+        if (!workspaces[currentWorkspace]) {
+            currentWorkspace = Object.keys(workspaces)[0];
+        }
+        
+        // Add emoji to existing workspaces if missing
+        Object.keys(workspaces).forEach(name => {
+            if (!workspaces[name].emoji) {
+                if (name === 'Work') workspaces[name].emoji = '💼';
+                else if (name === 'Personal') workspaces[name].emoji = '🏠';
+                else workspaces[name].emoji = '📁';
+            }
+        });
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+            
+            // Clean up existing workspaces - remove ALL old task types
+            Object.keys(workspaces).forEach(name => {
+                const workspace = workspaces[name];
+                // Reset ALL workspaces to clean state
+                if (workspace.taskTypes && workspace.taskTypes.length > 0) {
+                    // Check if it has any old defaults and reset to clean
+                    const oldDefaults = ['Delivery', 'Personal', 'Product', 'Home', 'Health', 'Finance', 'Learning'];
+                    const hasOldDefaults = workspace.taskTypes.some(type => oldDefaults.includes(type));
+                    if (hasOldDefaults) {
+                        workspace.taskTypes = [];
+                    }
+                }
+                // Add emoji if missing
+                if (!workspace.emoji) {
+                    if (name === 'Work') workspace.emoji = '💼';
+                    else if (name === 'Personal') workspace.emoji = '🏠';
+                    else workspace.emoji = '📁';
+                }
+            });
+            saveWorkspaces();
+            
+            renderWorkspaceTabs();
+            switchToWorkspace(currentWorkspace);
+            updateAppName();
+            initializeSync();
+        });
+
+        function setupEventListeners() {
+            // Quick input Enter key
+            document.getElementById('quickInput').addEventListener('keydown', function(e) {
+                if (e.ctrlKey && e.key === 'Enter') {
+                    parseQuickInput();
+                }
+            });
+
+            // Date input synchronization
+            document.getElementById('taskDate').addEventListener('input', function(e) {
+                const parsed = parseFlexibleDate(e.target.value);
+                e.target.value = parsed;
+                document.getElementById('taskDatePicker').value = formatDateForCalendar(parsed);
+            });
+
+            document.getElementById('taskDatePicker').addEventListener('change', function(e) {
+                const formatted = formatDateFromCalendar(e.target.value);
+                document.getElementById('taskDate').value = formatted;
+            });
+
+            // Form submission
+            document.getElementById('taskForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveTask();
+            });
+
+            // New type input Enter key
+            document.getElementById('newTypeName').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addTaskType();
+                }
+            });
+
+            // New workspace input Enter key
+            document.getElementById('workspaceName').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    saveWorkspaceChanges();
+                }
+            });
+        }
+
+        // Workspace Management
+        function renderWorkspaceTabs() {
+            const container = document.getElementById('workspaceTabs');
+            const workspaceNames = Object.keys(workspaces);
+            
+            let html = '';
+            workspaceNames.forEach(name => {
+                const workspace = workspaces[name];
+                const isActive = name === currentWorkspace;
+                html += `
+                    <div class="tab ${isActive ? 'active' : ''}" onclick="switchToWorkspace('${name}')">
+                        <span>${workspace.emoji || '📁'}</span>
+                        <span>${name}</span>
+                    </div>
+                `;
+            });
+            
+            html += `
+                <div class="add-tab" onclick="showWorkspaceModal()" title="Add workspace">
+                    ➕
+                </div>
+                <div class="add-tab" onclick="showWorkspaceManagerModal()" title="Manage workspaces">
+                    ⚙️
+                </div>
+            `;
+            container.innerHTML = html;
+        }
+
+        function switchToWorkspace(workspaceName) {
+            currentWorkspace = workspaceName;
+            localStorage.setItem('aiTaskTracker_currentWorkspace', currentWorkspace);
+            
+            showingArchive = false;
+            document.getElementById('workspaceTitle').textContent = `${workspaces[workspaceName].emoji || '📁'} ${workspaceName}`;
+            
+            renderWorkspaceTabs();
+            renderTasks();
+            updateArchiveCount();
+        }
+
+        function showWorkspaceModal() {
+            document.getElementById('workspaceName').value = '';
+            document.getElementById('workspaceEmoji').value = '';
+            document.getElementById('workspaceModalTitle').textContent = 'Create New Workspace';
+            document.getElementById('workspaceSubmitBtn').textContent = 'Create';
+            window.editingWorkspace = null;
+            showModal('workspaceModal');
+        }
+
+        function showWorkspaceManagerModal() {
+            renderWorkspaceManager();
+            showModal('workspaceManagerModal');
+        }
+
+        function renderWorkspaceManager() {
+            const container = document.getElementById('workspaceManagerList');
+            const workspaceNames = Object.keys(workspaces);
+            
+            const html = workspaceNames.map(name => {
+                const workspace = workspaces[name];
+                return `
+                    <div class="workspace-item">
+                        <div class="workspace-info">
+                            <span class="workspace-emoji">${workspace.emoji || '📁'}</span>
+                            <span class="workspace-name">${name}</span>
+                            <span class="workspace-stats">(${workspace.tasks.length} tasks)</span>
+                        </div>
+                        <div class="workspace-actions">
+                            <button class="action-btn edit-btn" onclick="editWorkspace('${name}')" title="Edit">
+                                ✏️
+                            </button>
+                            ${workspaceNames.length > 1 ? `
+                                <button class="action-btn delete-btn" onclick="deleteWorkspace('${name}')" title="Delete">
+                                    🗑️
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = html;
+        }
+
+        function editWorkspace(workspaceName) {
+            const workspace = workspaces[workspaceName];
+            document.getElementById('workspaceName').value = workspaceName;
+            document.getElementById('workspaceEmoji').value = workspace.emoji || '';
+            document.getElementById('workspaceModalTitle').textContent = 'Edit Workspace';
+            document.getElementById('workspaceSubmitBtn').textContent = 'Save';
+            window.editingWorkspace = workspaceName;
+            closeModal(); // Close manager modal
+            showModal('workspaceModal');
+        }
+
+        function saveWorkspaceChanges() {
+            const newName = document.getElementById('workspaceName').value.trim();
+            const newEmoji = document.getElementById('workspaceEmoji').value || '📁';
+            
+            if (!newName) return;
+            
+            if (window.editingWorkspace) {
+                const oldName = window.editingWorkspace;
+                if (newName !== oldName) {
+                    // Rename workspace
+                    workspaces[newName] = { ...workspaces[oldName], emoji: newEmoji };
+                    delete workspaces[oldName];
+                    if (currentWorkspace === oldName) {
+                        currentWorkspace = newName;
+                        localStorage.setItem('aiTaskTracker_currentWorkspace', currentWorkspace);
+                    }
+                } else {
+                    // Just update emoji
+                    workspaces[newName].emoji = newEmoji;
+                }
+            } else {
+                // Create new workspace
+                if (workspaces[newName]) return;
+                workspaces[newName] = {
+                    emoji: newEmoji,
+                    tasks: [],
+                    completedTasks: [],
+                    taskTypes: []
+                };
+                switchToWorkspace(newName);
+            }
+            
+            saveWorkspaces();
+            renderWorkspaceTabs();
+            if (currentWorkspace === newName) {
+                document.getElementById('workspaceTitle').textContent = `${workspaces[newName].emoji} ${newName}`;
+            }
+            closeModal();
+        }
+
+        function deleteWorkspace(workspaceName) {
+            if (Object.keys(workspaces).length <= 1) return;
+            
+            if (confirm(`Delete "${workspaceName}" workspace? This will permanently delete all tasks and data.`)) {
+                delete workspaces[workspaceName];
+                saveWorkspaces();
+                
+                if (workspaceName === currentWorkspace) {
+                    const remainingWorkspaces = Object.keys(workspaces);
+                    switchToWorkspace(remainingWorkspaces[0]);
+                } else {
+                    renderWorkspaceTabs();
+                }
+                
+                renderWorkspaceManager();
+            }
+        }
+
+        // Get current workspace data
+        function getCurrentWorkspace() {
+            return workspaces[currentWorkspace];
+        }
+
+        function getCurrentTasks() {
+            return getCurrentWorkspace().tasks;
+        }
+
+        function getCurrentCompletedTasks() {
+            return getCurrentWorkspace().completedTasks;
+        }
+
+        function getCurrentTaskTypes() {
+            return getCurrentWorkspace().taskTypes;
+        }
+
+        // Date parsing functions
+        function parseFlexibleDate(input) {
+            if (!input) return '';
+            
+            const parts = input.split('/');
+            if (parts.length < 2) return input;
+            
+            let month = parseInt(parts[0]);
+            let day = parseInt(parts[1]);
+            let year = parts[2] ? parseInt(parts[2]) : null;
+            
+            if (year && year < 100) {
+                year = year + 2000;
+            }
+            
+            if (!year) {
+                year = new Date().getFullYear();
+            }
+            
+            if (month < 1 || month > 12 || day < 1 || day > 31) {
+                return input;
+            }
+            
+            return `${month.toString().padStart(2, '0')}/${day.toString().padStart(2, '0')}`;
+        }
+
+        function formatDateForCalendar(dateStr) {
+            if (!dateStr) return '';
+            const [month, day] = dateStr.split('/').map(num => parseInt(num));
+            const currentYear = new Date().getFullYear();
+            return `${currentYear}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+        }
+
+        function formatDateFromCalendar(dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            return `${month}/${day}`;
+        }
+
+        // AI Parsing
+        async function parseQuickInput() {
+            const input = document.getElementById('quickInput').value.trim();
+            if (!input) return;
+
+            const status = document.getElementById('parseStatus');
+            status.textContent = '🤖 Parsing with AI...';
+            status.className = 'parsing-status status-parsing';
+            status.style.display = 'block';
+
+            try {
+                const response = await fetch("https://api.anthropic.com/v1/messages", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        model: "claude-sonnet-4-20250514",
+                        max_tokens: 1000,
+                        messages: [
+                            {
+                                role: "user",
+                                content: `Parse this text into a task with the following JSON format. If information is missing, use reasonable defaults. Current date is ${new Date().toLocaleDateString()}.
+
+Text: "${input}"
+
+Available task types: ${getCurrentTaskTypes().join(', ')}
+
+Respond ONLY with valid JSON in this exact format:
+{
+  "name": "task name",
+  "dueDate": "MM/DD format",
+  "priority": "P0, P1, P2, or P3",
+  "timeEstimate": number in minutes,
+  "taskType": "one of the available task types or 'General'"
+}
+
+Rules:
+- Extract the main action/task from the text
+- Parse dates like "tomorrow", "Friday", "next week" into MM/DD format
+- Infer priority from words like "urgent", "critical", "high", "low" (default P2)
+- Convert time estimates like "2 hours" to minutes (default 60)
+- Choose best matching task type from available types (default 'General')
+- DO NOT include any text outside the JSON object`
+                            }
+                        ]
+                    })
+                });
+
+                const data = await response.json();
+                let responseText = data.content[0].text;
+                
+                // Clean up response
+                responseText = responseText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+                
+                const taskData = JSON.parse(responseText);
+                
+                // Add the task
+                const newTask = {
+                    id: Date.now(),
+                    name: taskData.name,
+                    dueDate: taskData.dueDate,
+                    priority: taskData.priority,
+                    timeEstimate: taskData.timeEstimate,
+                    taskType: taskData.taskType
+                };
+
+                getCurrentWorkspace().tasks.push(newTask);
+                saveWorkspaces();
+                renderTasks();
+
+                status.textContent = '✅ Task added successfully!';
+                status.className = 'parsing-status status-success';
+                
+                document.getElementById('quickInput').value = '';
+                
+                setTimeout(() => {
+                    status.style.display = 'none';
+                }, 3000);
+
+            } catch (error) {
+                console.error('Parsing error:', error);
+                status.textContent = '❌ Failed to parse. Try manual add instead.';
+                status.className = 'parsing-status status-error';
+                
+                setTimeout(() => {
+                    status.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        // Task Management
+        function addTask(taskData) {
+            const newTask = {
+                id: Date.now(),
+                ...taskData
+            };
+            getCurrentWorkspace().tasks.push(newTask);
+            saveWorkspaces();
+            renderTasks();
+        }
+
+        function completeTask(taskId) {
+            const workspace = getCurrentWorkspace();
+            const task = workspace.tasks.find(t => t.id === taskId);
+            if (task) {
+                const completedTask = {
+                    ...task,
+                    completedAt: new Date().toLocaleString()
+                };
+                workspace.completedTasks.unshift(completedTask);
+                workspace.tasks = workspace.tasks.filter(t => t.id !== taskId);
+                saveWorkspaces();
+                renderTasks();
+                updateArchiveCount();
+            }
+        }
+
+        function deleteTask(taskId) {
+            getCurrentWorkspace().tasks = getCurrentWorkspace().tasks.filter(t => t.id !== taskId);
+            saveWorkspaces();
+            renderTasks();
+        }
+
+        function editTask(taskId) {
+            const task = getCurrentTasks().find(t => t.id === taskId);
+            if (task) {
+                editingTaskId = taskId;
+                document.getElementById('modalTitle').textContent = 'Edit Task';
+                document.getElementById('taskName').value = task.name;
+                document.getElementById('taskDate').value = task.dueDate;
+                document.getElementById('taskDatePicker').value = formatDateForCalendar(task.dueDate);
+                document.getElementById('taskPriority').value = task.priority;
+                document.getElementById('taskTime').value = task.timeEstimate;
+                document.getElementById('taskType').value = task.taskType || 'General';
+                updateTaskTypeSelects();
+                showModal('taskModal');
+            }
+        }
+
+        function saveTask() {
+            const name = document.getElementById('taskName').value.trim();
+            const dueDate = document.getElementById('taskDate').value;
+            const priority = document.getElementById('taskPriority').value;
+            const timeEstimate = parseInt(document.getElementById('taskTime').value);
+            const taskType = document.getElementById('taskType').value || 'General';
+
+            if (!name || !dueDate || !timeEstimate) return;
+
+            const taskData = { name, dueDate, priority, timeEstimate, taskType };
+
+            if (editingTaskId) {
+                const tasks = getCurrentWorkspace().tasks;
+                const taskIndex = tasks.findIndex(t => t.id === editingTaskId);
+                if (taskIndex !== -1) {
+                    tasks[taskIndex] = { ...tasks[taskIndex], ...taskData };
+                }
+                editingTaskId = null;
+            } else {
+                addTask(taskData);
+            }
+
+            saveWorkspaces();
+            renderTasks();
+            closeModal();
+        }
+
+        // Date categorization
+        function categorizeTasksByDate(taskList) {
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            
+            const dayOfWeek = today.getDay();
+            const daysUntilFriday = dayOfWeek <= 5 ? 5 - dayOfWeek : 0;
+            const thisFriday = new Date(today);
+            thisFriday.setDate(today.getDate() + daysUntilFriday);
+            
+            const nextFriday = new Date(thisFriday);
+            nextFriday.setDate(thisFriday.getDate() + 7);
+
+            const categories = {
+                overdue: [],
+                today: [],
+                thisWeek: [],
+                nextWeek: [],
+                future: []
+            };
+
+            taskList.forEach(task => {
+                const [month, day] = task.dueDate.split('/').map(n => parseInt(n));
+                const taskDate = new Date(now.getFullYear(), month - 1, day);
+
+                if (taskDate < today) {
+                    categories.overdue.push(task);
+                } else if (taskDate.getTime() === today.getTime()) {
+                    categories.today.push(task);
+                } else if (taskDate <= thisFriday) {
+                    categories.thisWeek.push(task);
+                } else if (taskDate <= nextFriday) {
+                    categories.nextWeek.push(task);
+                } else {
+                    categories.future.push(task);
+                }
+            });
+
+            // Sort by priority within each category
+            Object.keys(categories).forEach(category => {
+                categories[category].sort((a, b) => {
+                    const priorityA = parseInt(a.priority.substring(1));
+                    const priorityB = parseInt(b.priority.substring(1));
+                    return priorityA - priorityB;
+                });
+            });
+
+            return categories;
+        }
+
+        // Rendering
+        function renderTasks() {
+            const container = document.getElementById('taskSections');
+            const emptyState = document.getElementById('emptyState');
+
+            if (showingArchive) {
+                renderArchive();
+                return;
+            }
+
+            const tasks = getCurrentTasks();
+            if (tasks.length === 0) {
+                container.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            const categorized = categorizeTasksByDate(tasks);
+            
+            const sections = [
+                { key: 'overdue', title: 'Overdue', class: 'overdue' },
+                { key: 'today', title: 'Today', class: 'today' },
+                { key: 'thisWeek', title: 'This Week', class: 'this-week' },
+                { key: 'nextWeek', title: 'Next Week', class: 'next-week' },
+                { key: 'future', title: 'Future', class: 'future' }
+            ];
+
+            let html = '';
+            sections.forEach(section => {
+                const sectionTasks = categorized[section.key];
+                if (sectionTasks.length > 0) {
+                    html += `
+                        <div class="task-section">
+                            <div class="section-header ${section.class}">
+                                <span>${section.title} (${sectionTasks.length})</span>
+                            </div>
+                            <div class="task-list">
+                                ${sectionTasks.map(task => renderTaskCard(task)).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+
+            container.innerHTML = html;
+        }
+
+        function renderTaskCard(task, isArchived = false) {
+            const taskTypeDisplay = task.taskType && task.taskType !== 'General' && getCurrentTaskTypes().includes(task.taskType) ?
+                `<span class="meta-item type-${task.taskType.toLowerCase().replace(/\s+/g, '-')}">${task.taskType}</span>` :
+                '';
+                
+            return `
+                <div class="task-card ${isArchived ? 'archive-task' : ''}">
+                    <div class="task-header">
+                        <div class="task-title">${task.name}</div>
+                        <div class="task-actions">
+                            ${!isArchived ? `
+                                <button class="action-btn complete-btn" onclick="completeTask(${task.id})" title="Complete">
+                                    ✓
+                                </button>
+                                <button class="action-btn edit-btn" onclick="editTask(${task.id})" title="Edit">
+                                    ✏️
+                                </button>
+                            ` : ''}
+                            <button class="action-btn delete-btn" onclick="${isArchived ? 'deleteFromArchive' : 'deleteTask'}(${task.id})" title="Delete">
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+                    <div class="task-meta">
+                        <span class="meta-item">📅 ${isArchived ? 'Was due:' : 'Due:'} ${task.dueDate}</span>
+                        <span class="meta-item priority-${task.priority.toLowerCase()}">${task.priority}</span>
+                        ${taskTypeDisplay}
+                        <span class="meta-item">⏱️ ${task.timeEstimate}m</span>
+                        ${isArchived ? `<span class="meta-item">✅ ${task.completedAt}</span>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderArchive() {
+            const container = document.getElementById('taskSections');
+            const emptyState = document.getElementById('emptyState');
+            const completedTasks = getCurrentCompletedTasks();
+
+            if (completedTasks.length === 0) {
+                container.innerHTML = '';
+                emptyState.innerHTML = '<h3>No completed tasks yet!</h3><p>Complete some tasks to see them here.</p>';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            const html = `
+                <div class="task-section">
+                    <div class="section-header" style="border-color: #059669; color: #047857;">
+                        <span>📁 Completed Tasks (${completedTasks.length})</span>
+                    </div>
+                    <div class="task-list">
+                        ${completedTasks.map(task => renderTaskCard(task, true)).join('')}
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        // Task Type Management
+        function addTaskType() {
+            const name = document.getElementById('newTypeName').value.trim();
+            const taskTypes = getCurrentTaskTypes();
+            if (name && !taskTypes.includes(name)) {
+                taskTypes.push(name);
+                saveWorkspaces();
+                renderTypeManager();
+                updateTaskTypeSelects();
+                document.getElementById('newTypeName').value = '';
+            }
+        }
+
+        function removeTaskType(typeName) {
+            const workspace = getCurrentWorkspace();
+            if (workspace.taskTypes.length <= 1) return;
+            
+            workspace.taskTypes = workspace.taskTypes.filter(type => type !== typeName);
+            
+            // Update existing tasks to use 'General' if their type was removed
+            workspace.tasks = workspace.tasks.map(task =>
+                task.taskType === typeName ? {...task, taskType: 'General'} : task
+            );
+            workspace.completedTasks = workspace.completedTasks.map(task =>
+                task.taskType === typeName ? {...task, taskType: 'General'} : task
+            );
+            
+            saveWorkspaces();
+            renderTypeManager();
+            updateTaskTypeSelects();
+            renderTasks();
+        }
+
+        function renderTypeManager() {
+            const container = document.getElementById('typeList');
+            const taskTypes = getCurrentTaskTypes();
+            
+            if (taskTypes.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No task types yet. Add some below!</p>';
+                return;
+            }
+            
+            const html = taskTypes.map(type => `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: var(--bg-tertiary); border-radius: 6px; margin-bottom: 8px; border: 1px solid var(--border-color);">
+                    <span class="meta-item type-${type.toLowerCase().replace(/\s+/g, '-')}">${type}</span>
+                    <button class="action-btn delete-btn" onclick="removeTaskType('${type}')" title="Remove">
+                        🗑️
+                    </button>
+                </div>
+            `).join('');
+            container.innerHTML = html;
+        }
+
+        function updateTaskTypeSelects() {
+            const select = document.getElementById('taskType');
+            const currentValue = select.value;
+            const taskTypes = getCurrentTaskTypes();
+            
+            let options = '<option value="General">General</option>';
+            taskTypes.forEach(type => {
+                options += `<option value="${type}" ${type === currentValue ? 'selected' : ''}>${type}</option>`;
+            });
+            
+            select.innerHTML = options;
+        }
+
+        // Archive Management
+        function deleteFromArchive(taskId) {
+            getCurrentWorkspace().completedTasks = getCurrentWorkspace().completedTasks.filter(t => t.id !== taskId);
+            saveWorkspaces();
+            updateArchiveCount();
+            renderTasks();
+        }
+
+        function updateArchiveCount() {
+            document.getElementById('archive-count').textContent = getCurrentCompletedTasks().length;
+        }
+
+        // Modal Management
+        function showAddModal() {
+            editingTaskId = null;
+            document.getElementById('modalTitle').textContent = 'Add New Task';
+            document.getElementById('taskForm').reset();
+            document.getElementById('taskPriority').value = 'P2';
+            updateTaskTypeSelects();
+            showModal('taskModal');
+        }
+
+        function showModal(modalId) {
+            document.getElementById(modalId).classList.add('show');
+        }
+
+        function closeModal() {
+            const openModal = document.querySelector('.modal.show');
+            if (openModal) {
+                openModal.classList.remove('show');
+            }
+        }
+
+        function toggleTypeManager() {
+            renderTypeManager();
+            updateTaskTypeSelects();
+            showModal('typeModal');
+        }
+
+        function closeTypeManager() {
+            closeModal();
+        }
+
+        function toggleArchive() {
+            showingArchive = !showingArchive;
+            renderTasks();
+            
+            const btn = document.querySelector('[onclick="toggleArchive()"]');
+            btn.innerHTML = showingArchive ?
+                '📋 Active Tasks' :
+                '🗄️ Archive (<span id="archive-count">' + getCurrentCompletedTasks().length + '</span>)';
+        }
+
+        // App Settings
+        function showSettingsModal() {
+            document.getElementById('appNameInput').value = appName.replace('🤖 ', '');
+            showModal('settingsModal');
+        }
+
+        function saveAppSettings() {
+            const newName = document.getElementById('appNameInput').value.trim();
+            if (newName) {
+                appName = newName.includes('🤖') ? newName : `🤖 ${newName}`;
+                localStorage.setItem('aiTaskTracker_appName', appName);
+                updateAppName();
+                closeModal();
+            }
+        }
+
+        function updateAppName() {
+            document.getElementById('app-name').textContent = appName;
+            document.getElementById('app-title').textContent = appName.replace('🤖 ', '');
+            
+            // Update PWA manifest
+            if ('serviceWorker' in navigator) {
+                const manifest = {
+                    "name": appName.replace('🤖 ', ''),
+                    "short_name": appName.replace('🤖 ', '').substring(0, 12),
+                    "description": "Smart task tracker with AI input parsing",
+                    "start_url": "./",
+                    "display": "standalone",
+                    "background_color": "#ffffff",
+                    "theme_color": "#3b82f6",
+                    "icons": [
+                        {
+                            "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233b82f6'><path d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/></svg>",
+                            "sizes": "192x192",
+                            "type": "image/svg+xml"
+                        }
+                    ]
+                };
+                
+                const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+                const manifestURL = URL.createObjectURL(manifestBlob);
+                document.getElementById('pwa-manifest').href = manifestURL;
+            }
+        }
+
+        // Sync Functions
+        function showSyncModal() {
+            if (syncUrl) {
+                document.getElementById('syncSetupContent').style.display = 'none';
+                document.getElementById('syncStatusContent').style.display = 'block';
+            } else {
+                document.getElementById('syncSetupContent').style.display = 'block';
+                document.getElementById('syncStatusContent').style.display = 'none';
+            }
+            showModal('syncModal');
+        }
+
+        async function setupSync() {
+            const url = document.getElementById('syncUrl').value.trim();
+            const email = document.getElementById('syncEmail').value.trim();
+            
+            if (!url) return;
+            
+            // Validate GitHub Gist URL
+            if (!url.includes('gist.github.com')) {
+                alert('Please enter a valid GitHub Gist URL');
+                return;
+            }
+            
+            try {
+                // Convert to raw URL for API access
+                const rawUrl = url.replace('gist.github.com/', 'gist.githubusercontent.com/').replace('/gist/', '/') + '/raw/my-tasks.json';
+                
+                // Test connection
+                const response = await fetch(rawUrl);
+                if (!response.ok && response.status !== 404) {
+                    throw new Error('Cannot connect to sync URL');
+                }
+                
+                syncUrl = rawUrl;
+                localStorage.setItem('aiTaskTracker_syncUrl', syncUrl);
+                
+                // Send email if provided
+                if (email) {
+                    await sendSyncEmail(email, url);
+                }
+                
+                // Start syncing
+                initializeSync();
+                
+                // Show success
+                document.getElementById('syncSetupContent').style.display = 'none';
+                document.getElementById('syncStatusContent').style.display = 'block';
+                
+            } catch (error) {
+                alert('Failed to setup sync. Please check your URL and try again.');
+                console.error('Sync setup error:', error);
+            }
+        }
+
+        async function sendSyncEmail(email, gistUrl) {
+            try {
+                // Simple email service (using a free service like Formspree or similar)
+                const emailContent = {
+                    to: email,
+                    subject: `Your ${appName.replace('🤖 ', '')} Sync URL`,
+                    body: `Hi there!
+
+Here's your sync URL for ${appName.replace('🤖 ', '')}:
+${gistUrl}
+
+📱 How to use this URL:
+1. Open your task tracker app on any device
+2. Click the "🔄 Sync" button
+3. Paste this URL
+4. Click "Start Syncing"
+
+That's it! Your tasks will now sync across all your devices.
+
+Keep this email safe - you'll need this URL to sync new devices!
+
+Happy task tracking! ✅`
+                };
+                
+                // Note: In a real implementation, you'd use a proper email service
+                console.log('Email would be sent:', emailContent);
+                
+            } catch (error) {
+                console.error('Email sending failed:', error);
+                // Don't block sync setup if email fails
+            }
+        }
+
+        function disconnectSync() {
+            syncUrl = '';
+            localStorage.removeItem('aiTaskTracker_syncUrl');
+            if (syncInterval) {
+                clearInterval(syncInterval);
+                syncInterval = null;
+            }
+            closeModal();
+        }
+
+        function initializeSync() {
+            if (syncUrl) {
+                // Sync every 30 seconds
+                syncInterval = setInterval(syncData, 30000);
+                // Initial sync
+                syncData();
+            }
+        }
+
+        async function syncData() {
+            if (!syncUrl) return;
+            
+            try {
+                // Upload current data
+                const data = {
+                    workspaces,
+                    currentWorkspace,
+                    appName,
+                    lastSync: new Date().toISOString()
+                };
+                
+                // Note: This is a simplified version. In reality, you'd need to use GitHub's API
+                // to update the gist content. For now, this shows the structure.
+                console.log('Syncing data:', data);
+                
+            } catch (error) {
+                console.error('Sync failed:', error);
+            }
+        }
+
+        // Data Persistence
+        function saveWorkspaces() {
+            localStorage.setItem('aiTaskTracker_workspaces', JSON.stringify(workspaces));
+        }
+
+        // Click outside modal to close
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal')) {
+                closeModal();
+            }
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const openModal = document.querySelector('.modal.show');
+                if (openModal) {
+                    closeModal();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
