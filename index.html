@@ -565,16 +565,16 @@
         }
        
        .missing-field {
-                    background-color: #fef3c7 !important;
-                    border-radius: 6px !important;
-                    padding: 4px !important;
-                }
+                   background-color: #fef3c7 !important;
+                   border-radius: 6px !important;
+                   padding: 4px !important;
+               }
 
-                .field-note {
-                    font-size: 11px;
-                    color: #92400e;
-                    margin-top: 4px;
-                }
+       .field-note {
+           font-size: 11px;
+           color: #92400e;
+           margin-top: 4px;
+       }
 
         @media (max-width: 768px) {
             .container {
@@ -1074,13 +1074,6 @@
     </div>
 
     <script>
-                ]
-            };
-            
-            const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
-            const manifestURL = URL.createObjectURL(manifestBlob);
-            document.getElementById('pwa-manifest').href = manifestURL;
-        }
 
         // App State
         let workspaces = JSON.parse(localStorage.getItem('aiTaskTracker_workspaces') || '{}');
