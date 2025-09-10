@@ -6,7 +6,7 @@
     <title id="app-title">AI Task Tracker</title>
     
     <!-- PWA Meta Tags -->
-    <link rel="manifest" href="#" id="pwa-manifest">
+    <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#3b82f6">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1074,22 +1074,6 @@
     </div>
 
     <script>
-        // Generate PWA manifest programmatically to avoid display issues
-        if ('serviceWorker' in navigator) {
-            const manifest = {
-                "name": "AI Task Tracker",
-                "short_name": "Tasks",
-                "description": "Smart task tracker with AI input parsing",
-                "start_url": "./",
-                "display": "standalone",
-                "background_color": "#ffffff",
-                "theme_color": "#3b82f6",
-                "icons": [
-                    {
-                        "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233b82f6'><path d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/></svg>",
-                        "sizes": "192x192",
-                        "type": "image/svg+xml"
-                    }
                 ]
             };
             
