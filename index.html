@@ -199,43 +199,86 @@
         .btn-green { background: var(--green); color: white; }
 
         .quick-add {
-            background: var(--bg-secondary);
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: var(--shadow-md);
-            margin-bottom: 30px;
-            border: 1px solid var(--border-color);
+            background: linear-gradient(135deg, var(--blue) 0%, var(--purple) 100%);
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 24px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            max-width: 500px;
         }
 
         .quick-add h3 {
-            margin-bottom: 16px;
-            color: var(--text-primary);
-            font-size: 18px;
+            margin-bottom: 10px;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
         }
 
         .quick-input {
             width: 100%;
-            padding: 12px 16px;
-            border: 2px solid var(--border-color);
-            border-radius: 8px;
-            font-size: 16px;
-            margin-bottom: 12px;
+            padding: 8px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            font-size: 13px;
+            margin-bottom: 10px;
             resize: vertical;
-            min-height: 80px;
-            background: var(--bg-primary);
+            min-height: 50px;
+            max-height: 100px;
+            background: rgba(255, 255, 255, 0.95);
             color: var(--text-primary);
+            font-family: inherit;
         }
 
         .quick-input:focus {
             outline: none;
-            border-color: var(--blue);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            border-color: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+            background: white;
+        }
+
+        .quick-input::placeholder {
+            color: #000000 !important;
+            opacity: 1 !important;
         }
 
         .quick-buttons {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             align-items: center;
+        }
+
+        .quick-buttons .btn {
+            padding: 8px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 6px;
+            min-height: auto;
+        }
+
+        .quick-buttons .btn-green {
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--green);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .quick-buttons .btn-green:hover {
+            background: white;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .quick-buttons .btn-purple {
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--purple);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .quick-buttons .btn-purple:hover {
+            background: white;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
 
         .parsing-status {
@@ -834,9 +877,9 @@
 
             <div class="quick-add">
                 <h3>✨ Quick Add with AI</h3>
-                <textarea 
-                    class="quick-input" 
-                    id="quickInput" 
+                <textarea
+                    class="quick-input"
+                    id="quickInput"
                     placeholder="Just type naturally! e.g., 'Review API docs by Friday, high priority, 2 hours, product work'"
                     onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); parseQuickInput();}"
                 ></textarea>
@@ -1634,8 +1677,8 @@ Rules:
         }
 
         function renderTaskCard(task, isArchived = false) {
-            const taskTypeDisplay = task.taskType && task.taskType !== 'General' && getCurrentTaskTypes().includes(task.taskType) ? 
-                `<span class="meta-item type-${task.taskType.toLowerCase().replace(/\s+/g, '-')}">${task.taskType}</span>` : 
+            const taskTypeDisplay = task.taskType && task.taskType !== 'General' && getCurrentTaskTypes().includes(task.taskType) ?
+                `<span class="meta-item type-${task.taskType.toLowerCase().replace(/\s+/g, '-')}">${task.taskType}</span>` :
                 '';
                 
             return `
@@ -1714,10 +1757,10 @@ Rules:
             workspace.taskTypes = workspace.taskTypes.filter(type => type !== typeName);
             
             // Update existing tasks to use 'General' if their type was removed
-            workspace.tasks = workspace.tasks.map(task => 
+            workspace.tasks = workspace.tasks.map(task =>
                 task.taskType === typeName ? {...task, taskType: 'General'} : task
             );
-            workspace.completedTasks = workspace.completedTasks.map(task => 
+            workspace.completedTasks = workspace.completedTasks.map(task =>
                 task.taskType === typeName ? {...task, taskType: 'General'} : task
             );
             
@@ -1808,8 +1851,8 @@ Rules:
             renderTasks();
             
             const btn = document.querySelector('[onclick="toggleArchive()"]');
-            btn.innerHTML = showingArchive ? 
-                '📋 Active Tasks' : 
+            btn.innerHTML = showingArchive ?
+                '📋 Active Tasks' :
                 '🗄️ Archive (<span id="archive-count">' + getCurrentCompletedTasks().length + '</span>)';
         }
 
@@ -1986,6 +2029,113 @@ Happy task tracking! ✅`
             }
         }
 
+        // Voice Input
+        function startVoiceInput() {
+            const voiceBtn = document.getElementById('voiceBtn');
+            
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                alert('Voice input not supported in this browser. Try Chrome or Safari.');
+                return;
+            }
+
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const recognition = new SpeechRecognition();
+            
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'en-US';
+
+            voiceBtn.textContent = '🛑 Stop';
+            voiceBtn.onclick = function() { stopVoiceInput(recognition); };
+            voiceBtn.disabled = false;
+
+            // Show live transcript
+            let finalTranscript = '';
+
+            recognition.onresult = function(event) {
+                let interimTranscript = '';
+                
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        finalTranscript += transcript + ' ';
+                    } else {
+                        interimTranscript += transcript;
+                    }
+                }
+                
+                // Show live transcript in text box
+                document.getElementById('quickInput').value = finalTranscript + interimTranscript;
+            };
+
+            recognition.onerror = function(event) {
+                console.error('Speech recognition error:', event.error);
+                alert('Voice input failed. Please try again.');
+                resetVoiceButton();
+            };
+
+            recognition.onend = function() {
+                resetVoiceButton();
+            };
+
+            try {
+                recognition.start();
+            } catch (error) {
+                console.error('Failed to start speech recognition:', error);
+                alert('Could not start voice input. Please try again.');
+                resetVoiceButton();
+            }
+        }
+
+        function showVoicePreview(voiceText) {
+            const status = document.getElementById('parseStatus');
+            status.innerHTML = `
+                <div style="background: #f0fdf4; border: 1px solid #22c55e; border-radius: 6px; padding: 10px; margin-top: 8px;">
+                    <div style="color: #16a34a; font-weight: 600; margin-bottom: 8px;">Voice captured:</div>
+                    <div style="color: #374151; margin-bottom: 10px;">"${voiceText}"</div>
+                    <div style="display: flex; gap: 8px;">
+                        <button onclick="confirmVoiceInput()" style="background: #22c55e; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;">✓ Add Task</button>
+                        <button onclick="editVoiceInput()" style="background: #3b82f6; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;">✏️ Edit</button>
+                        <button onclick="cancelVoiceInput()" style="background: #6b7280; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;">✕ Cancel</button>
+                    </div>
+                </div>
+            `;
+            status.style.display = 'block';
+        }
+
+        function confirmVoiceInput() {
+            parseQuickInput();
+            document.getElementById('parseStatus').style.display = 'none';
+        }
+
+        function editVoiceInput() {
+            document.getElementById('quickInput').focus();
+            document.getElementById('parseStatus').style.display = 'none';
+        }
+
+        function cancelVoiceInput() {
+            document.getElementById('quickInput').value = '';
+            document.getElementById('parseStatus').style.display = 'none';
+        }
+        
+        function resetVoiceButton() {
+            const voiceBtn = document.getElementById('voiceBtn');
+            if (voiceBtn) {
+                voiceBtn.textContent = '🎤 Voice';
+                voiceBtn.onclick = function() { startVoiceInput(); };
+                voiceBtn.disabled = false;
+            }
+        }
+
+        function stopVoiceInput(recognition) {
+            recognition.stop();
+            const finalText = document.getElementById('quickInput').value.trim();
+            if (finalText) {
+                showVoicePreview(finalText);
+            }
+            resetVoiceButton();
+        }
+        
         // Data Persistence
         function saveWorkspaces() {
             localStorage.setItem('aiTaskTracker_workspaces', JSON.stringify(workspaces));
