@@ -834,9 +834,9 @@
 
             <div class="quick-add">
                 <h3>✨ Quick Add with AI</h3>
-                <textarea
-                    class="quick-input"
-                    id="quickInput"
+                <textarea 
+                    class="quick-input" 
+                    id="quickInput" 
                     placeholder="Just type naturally! e.g., 'Review API docs by Friday, high priority, 2 hours, product work'"
                     onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault(); parseQuickInput();}"
                 ></textarea>
@@ -1633,8 +1633,8 @@ Rules:
         }
 
         function renderTaskCard(task, isArchived = false) {
-            const taskTypeDisplay = task.taskType && task.taskType !== 'General' && getCurrentTaskTypes().includes(task.taskType) ?
-                `<span class="meta-item type-${task.taskType.toLowerCase().replace(/\s+/g, '-')}">${task.taskType}</span>` :
+            const taskTypeDisplay = task.taskType && task.taskType !== 'General' && getCurrentTaskTypes().includes(task.taskType) ? 
+                `<span class="meta-item type-${task.taskType.toLowerCase().replace(/\s+/g, '-')}">${task.taskType}</span>` : 
                 '';
                 
             return `
@@ -1713,10 +1713,10 @@ Rules:
             workspace.taskTypes = workspace.taskTypes.filter(type => type !== typeName);
             
             // Update existing tasks to use 'General' if their type was removed
-            workspace.tasks = workspace.tasks.map(task =>
+            workspace.tasks = workspace.tasks.map(task => 
                 task.taskType === typeName ? {...task, taskType: 'General'} : task
             );
-            workspace.completedTasks = workspace.completedTasks.map(task =>
+            workspace.completedTasks = workspace.completedTasks.map(task => 
                 task.taskType === typeName ? {...task, taskType: 'General'} : task
             );
             
@@ -1807,8 +1807,8 @@ Rules:
             renderTasks();
             
             const btn = document.querySelector('[onclick="toggleArchive()"]');
-            btn.innerHTML = showingArchive ?
-                '📋 Active Tasks' :
+            btn.innerHTML = showingArchive ? 
+                '📋 Active Tasks' : 
                 '🗄️ Archive (<span id="archive-count">' + getCurrentCompletedTasks().length + '</span>)';
         }
 
