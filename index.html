@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -420,6 +421,40 @@
             .priority-p3 { background: #166534; color: #4ade80; }
         }
 
+        /* Low-High Priority Styles */
+        .priority-critical { background: #fee2e2; color: #991b1b; }
+        .priority-high { background: #fed7aa; color: #c2410c; }
+        .priority-medium { background: #fef3c7; color: #a16207; }
+        .priority-low { background: #dcfce7; color: #166534; }
+
+        @media (prefers-color-scheme: dark) {
+            .priority-critical { background: #7f1d1d; color: #f87171; }
+            .priority-high { background: #9a3412; color: #fb923c; }
+            .priority-medium { background: #a16207; color: #fbbf24; }
+            .priority-low { background: #166534; color: #4ade80; }
+        }
+        
+        /* Category Color Styles */
+       .category-blue { background: #dbeafe; color: #1e40af; }
+       .category-green { background: #dcfce7; color: #166534; }
+       .category-purple { background: #e9d5ff; color: #7c2d12; }
+       .category-orange { background: #fed7aa; color: #c2410c; }
+       .category-red { background: #fee2e2; color: #991b1b; }
+       .category-pink { background: #fce7f3; color: #be185d; }
+       .category-teal { background: #ccfbf1; color: #0f766e; }
+       .category-gray { background: #f3f4f6; color: #374151; }
+
+       @media (prefers-color-scheme: dark) {
+           .category-blue { background: #1e3a8a; color: #60a5fa; }
+           .category-green { background: #166534; color: #4ade80; }
+           .category-purple { background: #581c87; color: #c084fc; }
+           .category-orange { background: #9a3412; color: #fb923c; }
+           .category-red { background: #7f1d1d; color: #f87171; }
+           .category-pink { background: #831843; color: #f9a8d4; }
+           .category-teal { background: #0f766e; color: #5eead4; }
+           .category-gray { background: #374151; color: #d1d5db; }
+       }
+        
         .modal {
             display: none;
             position: fixed;
@@ -576,6 +611,28 @@
            margin-top: 4px;
        }
 
+        .field-error {
+            border-color: #ef4444 !important;
+            background-color: #fef2f2 !important;
+        }
+
+        .error-message {
+            font-size: 12px;
+            color: #dc2626;
+            margin-top: 4px;
+            display: none;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .field-error {
+                border-color: #f87171 !important;
+                background-color: #7f1d1d !important;
+            }
+            .error-message {
+                color: #f87171;
+            }
+        }
+        
         @media (max-width: 768px) {
             .container {
                 padding: 12px;
@@ -882,6 +939,8 @@
                 <div class="workspace-title" id="workspaceTitle">💼 Work</div>
                 <div class="header-buttons">
                     <button class="btn btn-purple" onclick="toggleCategoryManager()">📂 Categories</button>
+                    <button class="btn btn-secondary" onclick="showFieldConfigModal()">⚙️ Fields</button>
+                    <button class="btn btn-secondary" onclick="showDefaultsModal()">🎯 Defaults</button>
                     <button class="btn btn-secondary" onclick="toggleArchive()">🗄️ Archive (<span id="archive-count">0</span>)</button>
                     <button class="btn btn-primary" onclick="showAddModal()">➕ Add Task</button>
                 </div>
@@ -914,23 +973,42 @@
     </div>
 
     <!-- Settings Modal -->
-    <div id="settingsModal" class="modal">
-        <div class="modal-content">
-            <h3>App Settings</h3>
-            <div class="form-group">
-                <label class="form-label">App Name</label>
-                <input type="text" id="appNameInput" class="form-input" placeholder="My Task Tracker">
-                <div style="margin-top: 8px; font-size: 12px; color: var(--text-secondary);">
-                    Customize your app name (appears in browser tab and when installed as PWA)
+        <div id="settingsModal" class="modal">
+            <div class="modal-content">
+                <h3>App Settings</h3>
+                <div class="form-group">
+                    <label class="form-label">App Name</label>
+                    <input type="text" id="appNameInput" class="form-input" placeholder="My Task Tracker">
+                    <div style="margin-top: 8px; font-size: 12px; color: var(--text-secondary);">
+                        Customize your app name (appears in browser tab and when installed as PWA)
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 24px;">
+                    <button class="btn btn-green" onclick="saveAppSettings()" style="flex: 1;">Save Settings</button>
+                    <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
                 </div>
             </div>
+        </div>
+
+    <!-- Field Defaults Modal -->
+    <div id="defaultsModal" class="modal">
+        <div class="modal-content">
+            <h3>Set Default Values for <span id="defaultsWorkspaceName"></span></h3>
+            <div style="margin-bottom: 20px; color: var(--text-secondary); font-size: 14px;">
+                Set default values that will pre-fill when creating new tasks in this workspace.
+            </div>
+            
+            <div id="defaultsList">
+                <!-- Populated dynamically -->
+            </div>
+            
             <div style="display: flex; gap: 10px; margin-top: 24px;">
-                <button class="btn btn-green" onclick="saveAppSettings()" style="flex: 1;">Save Settings</button>
+                <button class="btn btn-green" onclick="saveDefaults()" style="flex: 1;">Save Defaults</button>
                 <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
             </div>
         </div>
     </div>
-
+    
     <!-- Sync Setup Modal -->
     <div id="syncModal" class="modal">
         <div class="modal-content">
@@ -1022,33 +1100,35 @@
                 <div class="form-group">
                     <label class="form-label">Task Name</label>
                     <input type="text" id="taskName" class="form-input" required>
+                    <div id="taskNameError" class="error-message">Task name is required</div>
                 </div>
-                <div class="form-group">
+                <div class="form-group" id="dueDateGroup">
                     <label class="form-label">Due Date</label>
                     <div class="date-input-group">
                         <input type="text" id="taskDate" class="form-input" placeholder="MM/DD or M/D/YY">
                         <input type="date" id="taskDatePicker">
                         <span class="calendar-icon">📅</span>
                     </div>
+                    <div id="taskDateError" class="error-message">Due date is required</div>
                 </div>
-                <div class="form-group">
+                <div class="form-group" id="priorityGroup">
                     <label class="form-label">Priority</label>
                     <select id="taskPriority" class="form-select">
-                        <option value="P0">P0 - Critical</option>
-                        <option value="P1">P1 - High</option>
-                        <option value="P2" selected>P2 - Medium</option>
-                        <option value="P3">P3 - Low</option>
+                        <!-- Populated dynamically -->
                     </select>
+                    <div id="taskPriorityError" class="error-message">Priority is required</div>
                 </div>
-                <div class="form-group">
+                <div class="form-group" id="timeEstimateGroup">
                     <label class="form-label">Time Estimate (minutes)</label>
                     <input type="number" id="taskTime" class="form-input" min="1">
+                    <div id="taskTimeError" class="error-message">Time estimate is required</div>
                 </div>
-                <div class="form-group">
+                <div class="form-group" id="taskCategoryGroup">
                     <label class="form-label">Task Category</label>
                     <select id="taskCategory" class="form-select">
                         <!-- Populated dynamically -->
                     </select>
+                    <div id="taskCategoryError" class="error-message">Category is required</div>
                 </div>
                 <div style="display: flex; gap: 10px; margin-top: 24px;">
                     <button type="submit" class="btn btn-green" style="flex: 1;">Save Task</button>
@@ -1059,20 +1139,50 @@
     </div>
 
     <!-- Type Manager Modal -->
-    <div id="typeModal" class="modal">
+        <div id="typeModal" class="modal">
+            <div class="modal-content">
+                <h3>Manage Task Categories</h3>
+                <div id="typeList" style="margin-bottom: 20px;">
+                    <!-- Populated dynamically -->
+                </div>
+                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <input type="text" id="newTypeName" class="form-input" placeholder="New category name" style="flex: 1;">
+                    <input type="text" id="newTypeEmoji" class="form-input" placeholder="📁" maxlength="2" style="width: 60px;">
+                    <select id="newTypeColor" class="form-select" style="width: 120px;">
+                        <option value="blue">Blue</option>
+                        <option value="green">Green</option>
+                        <option value="purple">Purple</option>
+                        <option value="orange">Orange</option>
+                        <option value="red">Red</option>
+                        <option value="pink">Pink</option>
+                        <option value="teal">Teal</option>
+                        <option value="gray">Gray</option>
+                    </select>
+                    <button class="btn btn-purple" onclick="addtaskCategory()">Add</button>
+                </div>
+                <button class="btn btn-secondary" onclick="closeCategoryManager()">Close</button>
+            </div>
+        </div>
+
+    <!-- Field Configuration Modal -->
+    <div id="fieldConfigModal" class="modal">
         <div class="modal-content">
-            <h3>Manage Task Categorys</h3>
-            <div id="typeList" style="margin-bottom: 20px;">
+            <h3>Configure Fields for <span id="fieldConfigWorkspaceName"></span></h3>
+            <div style="margin-bottom: 20px; color: var(--text-secondary); font-size: 14px;">
+                Choose which fields are relevant for this workspace. Disabled fields won't appear in forms or trigger missing field warnings.
+            </div>
+            
+            <div id="fieldConfigList">
                 <!-- Populated dynamically -->
             </div>
-            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                <input type="text" id="newTypeName" class="form-input" placeholder="New type name" style="flex: 1;">
-                <button class="btn btn-purple" onclick="addtaskCategory()">Add</button>
+            
+            <div style="display: flex; gap: 10px; margin-top: 24px;">
+                <button class="btn btn-green" onclick="saveFieldConfig()" style="flex: 1;">Save Changes</button>
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
             </div>
-            <button class="btn btn-secondary" onclick="closeCategoryManager()">Close</button>
         </div>
     </div>
-
+    
     <script>
 
         // App State
@@ -1117,6 +1227,14 @@
             }
         });
 
+        // Fix existing workspaces that might be missing taskCategories
+        Object.keys(workspaces).forEach(name => {
+            const workspace = workspaces[name];
+            if (!workspace.taskCategories) {
+                workspace.taskCategories = [];
+            }
+        });
+        
         // Initialize app
         document.addEventListener('DOMContentLoaded', function() {
             setupEventListeners();
@@ -1158,6 +1276,17 @@
 
             // Date input synchronization
             document.getElementById('taskDate').addEventListener('input', function(e) {
+                // Don't auto-parse while user is typing, only on blur
+                if (e.target.value.length >= 4) { // Only when they've typed enough
+                    const parsed = parseFlexibleDate(e.target.value);
+                    if (parsed !== e.target.value) {
+                        e.target.value = parsed;
+                        document.getElementById('taskDatePicker').value = formatDateForCalendar(parsed);
+                    }
+                }
+            });
+
+            document.getElementById('taskDate').addEventListener('blur', function(e) {
                 const parsed = parseFlexibleDate(e.target.value);
                 e.target.value = parsed;
                 document.getElementById('taskDatePicker').value = formatDateForCalendar(parsed);
@@ -1311,7 +1440,15 @@
                     emoji: newEmoji,
                     tasks: [],
                     completedTasks: [],
-                    taskCategories: []
+                    taskCategories: [],
+                    enabledFields: {
+                        taskName: true,        // always required
+                        priorityLowHigh: true, // default enabled
+                        dueDate: true,         // default enabled
+                        categories: true,      // default enabled
+                        timeEstimate: false,   // optional
+                        priorityP0P3: false    // optional
+                    }
                 };
                 switchToWorkspace(newName);
             }
@@ -1342,6 +1479,245 @@
             }
         }
 
+        // Field Configuration Management
+        function showFieldConfigModal() {
+            const workspaceName = currentWorkspace;
+            document.getElementById('fieldConfigWorkspaceName').textContent = workspaceName;
+            renderFieldConfig();
+            showModal('fieldConfigModal');
+        }
+
+        function renderFieldConfig() {
+            const enabledFields = getCurrentEnabledFields();
+            const container = document.getElementById('fieldConfigList');
+            
+            const fieldOptions = [
+                { key: 'taskName', label: 'Task Name', description: 'Always required', disabled: true },
+                { key: 'dueDate', label: 'Due Date', description: 'When the task should be completed' },
+                { key: 'priorityLowHigh', label: 'Priority: Low-High', description: 'Low, Medium, High, Critical priority system' },
+                { key: 'priorityP0P3', label: 'Priority: P0-P3', description: 'P0 (Critical) to P3 (Low) priority system' },
+                { key: 'timeEstimate', label: 'Time Estimate', description: 'How long the task should take' },
+                { key: 'categories', label: 'Categories', description: 'Custom task categories' }
+            ];
+            
+            const html = fieldOptions.map(field => `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-tertiary); border-radius: 8px; margin-bottom: 12px; border: 1px solid var(--border-color);">
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">
+                            ${field.label}
+                            ${field.disabled ? '<span style="color: var(--text-tertiary); font-weight: normal;">(Required)</span>' : ''}
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">
+                            ${field.description}
+                        </div>
+                    </div>
+                    <div>
+                        <input 
+                            type="checkbox" 
+                            id="field-${field.key}" 
+                            ${enabledFields[field.key] ? 'checked' : ''} 
+                            ${field.disabled ? 'disabled' : ''}
+                            style="transform: scale(1.2); cursor: ${field.disabled ? 'not-allowed' : 'pointer'};"
+                        />
+                    </div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = html;
+        }
+
+        function saveFieldConfig() {
+            const workspace = getCurrentWorkspace();
+            const newEnabledFields = {
+                taskName: true, // Always required
+                dueDate: document.getElementById('field-dueDate').checked,
+                priorityLowHigh: document.getElementById('field-priorityLowHigh').checked,
+                priorityP0P3: document.getElementById('field-priorityP0P3').checked,
+                timeEstimate: document.getElementById('field-timeEstimate').checked,
+                categories: document.getElementById('field-categories').checked
+            };
+            
+            workspace.enabledFields = newEnabledFields;
+            saveWorkspaces();
+            closeModal();
+        }
+
+        function showDefaultsModal() {
+            const workspaceName = currentWorkspace;
+            document.getElementById('defaultsWorkspaceName').textContent = workspaceName;
+            renderDefaults();
+            showModal('defaultsModal');
+        }
+
+        function renderDefaults() {
+            const enabledFields = getCurrentEnabledFields();
+            const workspace = getCurrentWorkspace();
+            const defaults = workspace.fieldDefaults || {};
+            const container = document.getElementById('defaultsList');
+            
+            let html = '';
+            
+            if (enabledFields.dueDate) {
+                html += `
+                    <div class="form-group">
+                        <label class="form-label">Default Due Date</label>
+                        <select id="default-dueDate" class="form-select">
+                            <option value="">No default</option>
+                            <option value="today" ${defaults.dueDate === 'today' ? 'selected' : ''}>Today</option>
+                            <option value="tomorrow" ${defaults.dueDate === 'tomorrow' ? 'selected' : ''}>Tomorrow</option>
+                            <option value="nextWeek" ${defaults.dueDate === 'nextWeek' ? 'selected' : ''}>Next Monday</option>
+                        </select>
+                    </div>
+                `;
+            }
+            
+            if (enabledFields.priorityLowHigh) {
+                html += `
+                    <div class="form-group">
+                        <label class="form-label">Default Priority (Low-High)</label>
+                        <select id="default-priorityLowHigh" class="form-select">
+                            <option value="">No default</option>
+                            <option value="Low" ${defaults.priorityLowHigh === 'Low' ? 'selected' : ''}>Low</option>
+                            <option value="Medium" ${defaults.priorityLowHigh === 'Medium' ? 'selected' : ''}>Medium</option>
+                            <option value="High" ${defaults.priorityLowHigh === 'High' ? 'selected' : ''}>High</option>
+                            <option value="Critical" ${defaults.priorityLowHigh === 'Critical' ? 'selected' : ''}>Critical</option>
+                        </select>
+                    </div>
+                `;
+            }
+            
+            if (enabledFields.priorityP0P3) {
+                html += `
+                    <div class="form-group">
+                        <label class="form-label">Default Priority (P0-P3)</label>
+                        <select id="default-priorityP0P3" class="form-select">
+                            <option value="">No default</option>
+                            <option value="P0" ${defaults.priorityP0P3 === 'P0' ? 'selected' : ''}>P0 - Critical</option>
+                            <option value="P1" ${defaults.priorityP0P3 === 'P1' ? 'selected' : ''}>P1 - High</option>
+                            <option value="P2" ${defaults.priorityP0P3 === 'P2' ? 'selected' : ''}>P2 - Medium</option>
+                            <option value="P3" ${defaults.priorityP0P3 === 'P3' ? 'selected' : ''}>P3 - Low</option>
+                        </select>
+                    </div>
+                `;
+            }
+            
+            if (enabledFields.timeEstimate) {
+                html += `
+                    <div class="form-group">
+                        <label class="form-label">Default Time Estimate (minutes)</label>
+                        <select id="default-timeEstimate" class="form-select">
+                            <option value="">No default</option>
+                            <option value="15" ${defaults.timeEstimate === 15 ? 'selected' : ''}>15 minutes</option>
+                            <option value="30" ${defaults.timeEstimate === 30 ? 'selected' : ''}>30 minutes</option>
+                            <option value="60" ${defaults.timeEstimate === 60 ? 'selected' : ''}>1 hour</option>
+                            <option value="120" ${defaults.timeEstimate === 120 ? 'selected' : ''}>2 hours</option>
+                            <option value="240" ${defaults.timeEstimate === 240 ? 'selected' : ''}>4 hours</option>
+                        </select>
+                    </div>
+                `;
+            }
+            
+            if (enabledFields.categories) {
+                const categories = getCurrentTaskCategories();
+                let categoryOptions = '<option value="">No default</option>';
+                categoryOptions += '<option value="General" ' + (defaults.taskCategory === 'General' ? 'selected' : '') + '>General</option>';
+                categories.forEach(cat => {
+                    categoryOptions += `<option value="${cat}" ${defaults.taskCategory === cat ? 'selected' : ''}>${cat}</option>`;
+                });
+                
+                html += `
+                    <div class="form-group">
+                        <label class="form-label">Default Category</label>
+                        <select id="default-taskCategory" class="form-select">
+                            ${categoryOptions}
+                        </select>
+                    </div>
+                `;
+            }
+            
+            if (!html) {
+                html = '<p style="text-align: center; color: var(--text-secondary); padding: 20px;">No fields enabled for defaults.</p>';
+            }
+            
+            container.innerHTML = html;
+        }
+
+        function saveDefaults() {
+            const workspace = getCurrentWorkspace();
+            const enabledFields = getCurrentEnabledFields();
+            const defaults = {};
+            
+            if (enabledFields.dueDate) {
+                const value = document.getElementById('default-dueDate').value;
+                if (value) defaults.dueDate = value;
+            }
+            
+            if (enabledFields.priorityLowHigh) {
+                const value = document.getElementById('default-priorityLowHigh').value;
+                if (value) defaults.priorityLowHigh = value;
+            }
+            
+            if (enabledFields.priorityP0P3) {
+                const value = document.getElementById('default-priorityP0P3').value;
+                if (value) defaults.priorityP0P3 = value;
+            }
+            
+            if (enabledFields.timeEstimate) {
+                const value = document.getElementById('default-timeEstimate').value;
+                if (value) defaults.timeEstimate = parseInt(value);
+            }
+            
+            if (enabledFields.categories) {
+                const value = document.getElementById('default-taskCategory').value;
+                if (value) defaults.taskCategory = value;
+            }
+            
+            workspace.fieldDefaults = defaults;
+            saveWorkspaces();
+            closeModal();
+        }
+
+        function applyFieldDefaults() {
+            const workspace = getCurrentWorkspace();
+            const defaults = workspace.fieldDefaults || {};
+            const enabledFields = getCurrentEnabledFields();
+            
+            // Apply due date default
+            if (enabledFields.dueDate && defaults.dueDate) {
+                let defaultDate = '';
+                if (defaults.dueDate === 'today') {
+                    defaultDate = getTodayDateString();
+                } else if (defaults.dueDate === 'tomorrow') {
+                    const tomorrow = new Date();
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    defaultDate = formatDate(tomorrow);
+                } else if (defaults.dueDate === 'nextWeek') {
+                    defaultDate = getNextWeekday(1); // Next Monday
+                }
+                if (defaultDate) {
+                    document.getElementById('taskDate').value = defaultDate;
+                    document.getElementById('taskDatePicker').value = formatDateForCalendar(defaultDate);
+                }
+            }
+            
+            // Apply priority defaults
+            if (enabledFields.priorityLowHigh && defaults.priorityLowHigh) {
+                document.getElementById('taskPriority').value = defaults.priorityLowHigh;
+            } else if (enabledFields.priorityP0P3 && defaults.priorityP0P3) {
+                document.getElementById('taskPriority').value = defaults.priorityP0P3;
+            }
+            
+            // Apply time estimate default
+            if (enabledFields.timeEstimate && defaults.timeEstimate) {
+                document.getElementById('taskTime').value = defaults.timeEstimate;
+            }
+            
+            // Apply category default
+            if (enabledFields.categories && defaults.taskCategory) {
+                document.getElementById('taskCategory').value = defaults.taskCategory;
+            }
+        }
+        
         // Get current workspace data
         function getCurrentWorkspace() {
             return workspaces[currentWorkspace];
@@ -1356,9 +1732,27 @@
         }
 
         function getCurrentTaskCategories() {
-            return getCurrentWorkspace().taskCategories || [];
+            const workspace = getCurrentWorkspace();
+            console.log('getCurrentTaskCategories - workspace:', workspace);
+            console.log('getCurrentTaskCategories - taskCategories:', workspace.taskCategories);
+            return workspace.taskCategories || [];
         }
 
+        function getPriorityLowHighOptions() {
+            return getCurrentWorkspace().priorityLowHighOptions || ['Low', 'Medium', 'High', 'Critical'];
+        }
+
+        function getCurrentEnabledFields() {
+            return getCurrentWorkspace().enabledFields || {
+                taskName: true,
+                priorityLowHigh: true,
+                dueDate: true,
+                categories: true,
+                timeEstimate: false,
+                priorityP0P3: false
+            };
+        }
+        
         // Date parsing functions
         function parseFlexibleDate(input) {
             if (!input) return '';
@@ -1375,7 +1769,17 @@
             }
             
             if (!year) {
-                year = new Date().getFullYear();
+                // Smart year logic: find next occurrence of MM/DD
+                const today = new Date();
+                const currentYear = today.getFullYear();
+                const targetDate = new Date(currentYear, month - 1, day);
+                
+                if (targetDate <= today) {
+                    // If date has passed this year, use next year
+                    year = currentYear + 1;
+                } else {
+                    year = currentYear;
+                }
             }
             
             if (month < 1 || month > 12 || day < 1 || day > 31) {
@@ -1413,11 +1817,19 @@
             try {
                 const taskData = parseTaskWithPatterns(input);
                 
-                // Check if essential fields are missing
+                // Check if essential fields are missing (only for enabled fields)
+                const enabledFields = getCurrentEnabledFields();
                 const missingFields = [];
-                if (!taskData.dueDate || taskData.dueDate === getTodayDateString()) missingFields.push('due date');
-                if (taskData.timeEstimate === 60) missingFields.push('time estimate');
-                if (taskData.taskCategory === 'General') missingFields.push('category');
+
+                if (enabledFields.dueDate && (!taskData.dueDate || taskData.dueDate === getTodayDateString())) {
+                    missingFields.push('due date');
+                }
+                if (enabledFields.timeEstimate && taskData.timeEstimate === 60) {
+                    missingFields.push('time estimate');
+                }
+                if (enabledFields.categories && taskData.taskCategory === 'General') {
+                    missingFields.push('category');
+                }
                 
                 if (missingFields.length > 0) {
                     // Show modal with pre-filled data and missing field indicators
@@ -1514,13 +1926,33 @@
             let text = input.toLowerCase();
             
             // Extract priority
-            let priority = 'P2'; // default medium
-            if (text.includes('urgent') || text.includes('critical') || text.includes('p0')) {
-                priority = 'P0';
-            } else if (text.includes('high priority') || text.includes('high') || text.includes('important') || text.includes('p1')) {
-                priority = 'P1';
-            } else if (text.includes('low priority') || text.includes('low') || text.includes('p3')) {
-                priority = 'P3';
+            const enabledFields = getCurrentEnabledFields();
+            let priority = enabledFields.priorityLowHigh ? 'Medium' : 'P2'; // default based on enabled system
+
+            // Check for Low-High priority system first
+            if (enabledFields.priorityLowHigh) {
+                if (text.includes('critical')) {
+                    priority = 'Critical';
+                } else if (text.includes('high priority') || text.includes('high') || text.includes('important')) {
+                    priority = 'High';
+                } else if (text.includes('low priority') || text.includes('low')) {
+                    priority = 'Low';
+                } else if (text.includes('medium')) {
+                    priority = 'Medium';
+                }
+            }
+
+            // Check for P0-P3 system if enabled
+            if (enabledFields.priorityP0P3) {
+                if (text.includes('urgent') || text.includes('critical') || text.includes('p0')) {
+                    priority = 'P0';
+                } else if (text.includes('high priority') || text.includes('high') || text.includes('important') || text.includes('p1')) {
+                    priority = 'P1';
+                } else if (text.includes('p2')) {
+                    priority = 'P2';
+                } else if (text.includes('low priority') || text.includes('low') || text.includes('p3')) {
+                    priority = 'P3';
+                }
             }
             
             // Extract time estimate
@@ -1551,7 +1983,25 @@
             let dueDate = getTodayDateString();
             const now = new Date();
             
-            if (text.includes('tomorrow')) {
+            // Extract MM/DD date patterns first
+            const dateMatch = text.match(/\b(\d{1,2})\/(\d{1,2})(?:\/\d{2,4})?\b/);
+            if (dateMatch) {
+                const month = parseInt(dateMatch[1]);
+                const day = parseInt(dateMatch[2]);
+                if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+                    // Use the smart year logic
+                    const today = new Date();
+                    const currentYear = today.getFullYear();
+                    const targetDate = new Date(currentYear, month - 1, day);
+                    
+                    if (targetDate <= today) {
+                        // If date has passed this year, use next year (but still format as MM/DD)
+                        dueDate = `${month.toString().padStart(2, '0')}/${day.toString().padStart(2, '0')}`;
+                        } else {
+                            dueDate = `${month.toString().padStart(2, '0')}/${day.toString().padStart(2, '0')}`;
+                    }
+                }
+            } else if (text.includes('tomorrow')) {
                 const tomorrow = new Date(now);
                 tomorrow.setDate(now.getDate() + 1);
                 dueDate = formatDate(tomorrow);
@@ -1590,8 +2040,10 @@
             // Clean up task name
             let taskName = originalInput
                 .replace(/\b(urgent|critical|high priority|high|important|low priority|low|p0|p1|p2|p3)\b/gi, '')
-                .replace(/\b\d+\s*(min|mins|minutes|hour|hours|hr)\b/gi, '')
-                .replace(/\b(tomorrow|today|friday|monday)\b/gi, '')
+                .replace(/\b\d+\s*m\b/gi, '') // Remove time patterns like "5m"
+                .replace(/\b\d+\s*(min|mins|minutes|hour|hours|hrs?)\b/gi, '')
+                .replace(/\b(tomorrow|today|friday|monday|tuesday|wednesday|thursday|saturday|sunday|next week)\b/gi, '')
+                .replace(/\b\d{1,2}\/\d{1,2}(?:\/\d{2,4})?\b/gi, '') // Remove MM/DD or MM/DD/YY patterns
                 .replace(/\s+/g, ' ')
                 .trim();
             
@@ -1683,21 +2135,103 @@
                 document.getElementById('taskPriority').value = task.priority;
                 document.getElementById('taskTime').value = task.timeEstimate;
                 document.getElementById('taskCategory').value = task.taskCategory || 'General';
+                updatePrioritySelects();
                 updateTaskCategorySelects();
+                updateModalFieldVisibility();
                 showModal('taskModal');
             }
         }
 
+        function clearValidationErrors() {
+            // Remove error styling from all fields
+            document.querySelectorAll('.field-error').forEach(el => el.classList.remove('field-error'));
+            // Hide all error messages
+            document.querySelectorAll('.error-message').forEach(el => el.style.display = 'none');
+        }
+
+        function showFieldError(fieldId, show = true) {
+            const field = document.getElementById(fieldId);
+            const errorMsg = document.getElementById(fieldId + 'Error');
+            
+            if (show) {
+                field.classList.add('field-error');
+                errorMsg.style.display = 'block';
+            } else {
+                field.classList.remove('field-error');
+                errorMsg.style.display = 'none';
+            }
+        }
+
+        function validateTaskForm() {
+            clearValidationErrors();
+            const enabledFields = getCurrentEnabledFields();
+            let isValid = true;
+            
+            // Task name is always required
+            if (!document.getElementById('taskName').value.trim()) {
+                showFieldError('taskName');
+                isValid = false;
+            }
+            
+            // Validate enabled fields only
+            if (enabledFields.dueDate && !document.getElementById('taskDate').value.trim()) {
+                showFieldError('taskDate');
+                isValid = false;
+            }
+            
+            if (enabledFields.timeEstimate && !document.getElementById('taskTime').value) {
+                showFieldError('taskTime');
+                isValid = false;
+            }
+            
+            return isValid;
+            }
+
+            function setupFieldValidationListeners() {
+                // Clear errors when user starts typing/selecting
+                document.getElementById('taskName').addEventListener('input', () => showFieldError('taskName', false));
+                document.getElementById('taskDate').addEventListener('input', () => showFieldError('taskDate', false));
+                document.getElementById('taskTime').addEventListener('input', () => showFieldError('taskTime', false));
+                document.getElementById('taskPriority').addEventListener('change', () => showFieldError('taskPriority', false));
+                document.getElementById('taskCategory').addEventListener('change', () => showFieldError('taskCategory', false));
+            }
+        
         function saveTask() {
+            const enabledFields = getCurrentEnabledFields();
             const name = document.getElementById('taskName').value.trim();
-            const dueDate = document.getElementById('taskDate').value;
-            const priority = document.getElementById('taskPriority').value;
-            const timeEstimate = parseInt(document.getElementById('taskTime').value);
-            const taskCategory = document.getElementById('taskCategory').value || 'General';
-
-            if (!name || !dueDate || !timeEstimate) return;
-
-            const taskData = { name, dueDate, priority, timeEstimate, taskCategory };
+            
+            if (!name) return; // Task name is always required
+            
+            // Only get values from enabled fields
+            let taskData = { name };
+            
+            if (enabledFields.dueDate) {
+                const dueDate = document.getElementById('taskDate').value;
+                if (!dueDate) return; // Required if enabled
+                taskData.dueDate = dueDate;
+            } else {
+                taskData.dueDate = getTodayDateString(); // Default for disabled field
+            }
+            
+            if (enabledFields.priorityLowHigh || enabledFields.priorityP0P3) {
+                taskData.priority = document.getElementById('taskPriority').value;
+            } else {
+                taskData.priority = 'Medium'; // Default priority
+            }
+            
+            if (enabledFields.timeEstimate) {
+                const timeEstimate = parseInt(document.getElementById('taskTime').value);
+                if (!timeEstimate) return; // Required if enabled
+                taskData.timeEstimate = timeEstimate;
+            } else {
+                taskData.timeEstimate = 60; // Default 1 hour
+            }
+            
+            if (enabledFields.categories) {
+                taskData.taskCategory = document.getElementById('taskCategory').value || 'General';
+            } else {
+                taskData.taskCategory = 'General';
+            }
 
             if (editingTaskId) {
                 const tasks = getCurrentWorkspace().tasks;
@@ -1814,8 +2348,40 @@
         }
 
         function renderTaskCard(task, isArchived = false) {
-            const taskCategoryDisplay = task.taskCategory && task.taskCategory !== 'General' && getCurrentTaskCategories().includes(task.taskCategory) ?
-                `<span class="meta-item type-${task.taskCategory.toLowerCase().replace(/\s+/g, '-')}">${task.taskCategory}</span>` :
+            const enabledFields = getCurrentEnabledFields();
+            
+            // Only show category if categories are enabled and task has a non-General category
+            let taskCategoryDisplay = '';
+            if (enabledFields.categories && task.taskCategory && task.taskCategory !== 'General') {
+                const categories = getCurrentTaskCategories();
+                const categoryObj = categories.find(cat => {
+                    const catName = typeof cat === 'string' ? cat : cat.name;
+                    return catName === task.taskCategory;
+                });
+                
+                if (categoryObj) {
+                    const categoryName = typeof categoryObj === 'string' ? categoryObj : categoryObj.name;
+                    const categoryEmoji = typeof categoryObj === 'string' ? '' : (categoryObj.emoji || '');
+                    const categoryColor = typeof categoryObj === 'string' ? 'blue' : (categoryObj.color || 'blue');
+                    
+                    const displayText = categoryEmoji ? `${categoryEmoji} ${categoryName}` : categoryName;
+                    taskCategoryDisplay = `<span class="meta-item category-${categoryColor}">${displayText}</span>`;
+                }
+            }
+            
+            // Only show priority if either priority system is enabled
+            const priorityDisplay = (enabledFields.priorityLowHigh || enabledFields.priorityP0P3) ?
+                `<span class="meta-item priority-${task.priority.toLowerCase()}">${task.priority}</span>` :
+                '';
+            
+            // Only show time estimate if enabled
+            const timeEstimateDisplay = enabledFields.timeEstimate ?
+                `<span class="meta-item">⏱️ ${task.timeEstimate}m</span>` :
+                '';
+            
+            // Only show due date if enabled
+            const dueDateDisplay = enabledFields.dueDate ?
+                `<span class="meta-item">📅 ${isArchived ? 'Was due:' : 'Due:'} ${task.dueDate}</span>` :
                 '';
                 
             return `
@@ -1837,10 +2403,10 @@
                         </div>
                     </div>
                     <div class="task-meta">
-                        <span class="meta-item">📅 ${isArchived ? 'Was due:' : 'Due:'} ${task.dueDate}</span>
-                        <span class="meta-item priority-${task.priority.toLowerCase()}">${task.priority}</span>
+                        ${dueDateDisplay}
+                        ${priorityDisplay}
                         ${taskCategoryDisplay}
-                        <span class="meta-item">⏱️ ${task.timeEstimate}m</span>
+                        ${timeEstimateDisplay}
                         ${isArchived ? `<span class="meta-item">✅ ${task.completedAt}</span>` : ''}
                     </div>
                 </div>
@@ -1877,13 +2443,28 @@
         // Task Category Management
         function addtaskCategory() {
             const name = document.getElementById('newTypeName').value.trim();
+            const emoji = document.getElementById('newTypeEmoji').value.trim() || '📁';
+            const color = document.getElementById('newTypeColor').value;
+            
             const taskCategories = getCurrentTaskCategories();
-            if (name && !taskCategories.includes(name)) {
-                taskCategories.push(name);
+            if (name && !taskCategories.some(cat => {
+                const catName = typeof cat === 'string' ? cat : cat.name;
+                return catName === name;
+            })) {
+                const newCategory = {
+                    name: name,
+                    emoji: emoji,
+                    color: color
+                };
+                taskCategories.push(newCategory);
                 saveWorkspaces();
                 renderTypeManager();
                 updateTaskCategorySelects();
+                
+                // Clear inputs
                 document.getElementById('newTypeName').value = '';
+                document.getElementById('newTypeEmoji').value = '';
+                document.getElementById('newTypeColor').value = 'blue';
             }
         }
 
@@ -1912,18 +2493,25 @@
             const taskCategories = getCurrentTaskCategories();
             
             if (taskCategories.length === 0) {
-                container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No Task Categorys yet. Add some below!</p>';
+                container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No categories yet. Add some below!</p>';
                 return;
             }
             
-            const html = taskCategories.map(type => `
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: var(--bg-tertiary); border-radius: 6px; margin-bottom: 8px; border: 1px solid var(--border-color);">
-                    <span class="meta-item type-${type.toLowerCase().replace(/\s+/g, '-')}">${type}</span>
-                    <button class="action-btn delete-btn" onclick="removetaskCategory('${type}')" title="Remove">
-                        🗑️
-                    </button>
-                </div>
-            `).join('');
+            const html = taskCategories.map(category => {
+                // Handle both old string format and new object format
+                const categoryName = typeof category === 'string' ? category : category.name;
+                const categoryEmoji = typeof category === 'string' ? '📁' : (category.emoji || '📁');
+                const categoryColor = typeof category === 'string' ? 'blue' : (category.color || 'blue');
+                
+                return `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: var(--bg-tertiary); border-radius: 6px; margin-bottom: 8px; border: 1px solid var(--border-color);">
+                        <span class="meta-item category-${categoryColor}">${categoryEmoji} ${categoryName}</span>
+                        <button class="action-btn delete-btn" onclick="removetaskCategory('${categoryName}')" title="Remove">
+                            🗑️
+                        </button>
+                    </div>
+                `;
+            }).join('');
             container.innerHTML = html;
         }
 
@@ -1933,13 +2521,86 @@
             const taskCategories = getCurrentTaskCategories();
             
             let options = '<option value="General">General</option>';
-            taskCategories.forEach(type => {
-                options += `<option value="${type}" ${type === currentValue ? 'selected' : ''}>${type}</option>`;
+            taskCategories.forEach(category => {
+                // Handle both old string format and new object format
+                const categoryName = typeof category === 'string' ? category : category.name;
+                const categoryEmoji = typeof category === 'string' ? '' : (category.emoji || '');
+                const categoryColor = typeof category === 'string' ? 'blue' : (category.color || 'blue');
+                
+                const displayText = categoryEmoji ? `${categoryEmoji} ${categoryName}` : categoryName;
+                options += `<option value="${categoryName}" ${categoryName === currentValue ? 'selected' : ''}>${displayText}</option>`;
             });
             
             select.innerHTML = options;
         }
 
+        function updatePrioritySelects() {
+            const enabledFields = getCurrentEnabledFields();
+            const select = document.getElementById('taskPriority');
+            
+            let options = '';
+            let defaultValue = '';
+            
+            if (enabledFields.priorityLowHigh && enabledFields.priorityP0P3) {
+                // Both enabled - show both systems
+                options = `
+                    <optgroup label="Low-High Priority">
+                        <option value="Critical">Critical</option>
+                        <option value="High">High</option>
+                        <option value="Medium" selected>Medium</option>
+                        <option value="Low">Low</option>
+                    </optgroup>
+                    <optgroup label="P0-P3 Priority">
+                        <option value="P0">P0 - Critical</option>
+                        <option value="P1">P1 - High</option>
+                        <option value="P2">P2 - Medium</option>
+                        <option value="P3">P3 - Low</option>
+                    </optgroup>
+                `;
+                defaultValue = 'Medium';
+            } else if (enabledFields.priorityLowHigh) {
+                // Only Low-High
+                options = `
+                    <option value="Critical">Critical</option>
+                    <option value="High">High</option>
+                    <option value="Medium" selected>Medium</option>
+                    <option value="Low">Low</option>
+                `;
+                defaultValue = 'Medium';
+            } else if (enabledFields.priorityP0P3) {
+                // Only P0-P3
+                options = `
+                    <option value="P0">P0 - Critical</option>
+                    <option value="P1">P1 - High</option>
+                    <option value="P2" selected>P2 - Medium</option>
+                    <option value="P3">P3 - Low</option>
+                `;
+                defaultValue = 'P2';
+            }
+            
+            select.innerHTML = options;
+            if (defaultValue) {
+                select.value = defaultValue;
+            }
+        }
+        
+        function updateModalFieldVisibility() {
+            const enabledFields = getCurrentEnabledFields();
+            
+            // Show/hide fields based on workspace settings
+            document.getElementById('dueDateGroup').style.display = enabledFields.dueDate ? 'block' : 'none';
+            document.getElementById('timeEstimateGroup').style.display = enabledFields.timeEstimate ? 'block' : 'none';
+            document.getElementById('taskCategoryGroup').style.display = enabledFields.categories ? 'block' : 'none';
+            
+            // Hide priority section if neither priority system is enabled
+            const priorityGroup = document.getElementById('priorityGroup');
+            if (!enabledFields.priorityLowHigh && !enabledFields.priorityP0P3) {
+                priorityGroup.style.display = 'none';
+            } else {
+                priorityGroup.style.display = 'block';
+            }
+        }
+        
         // Archive Management
         function deleteFromArchive(taskId) {
             getCurrentWorkspace().completedTasks = getCurrentWorkspace().completedTasks.filter(t => t.id !== taskId);
@@ -1957,8 +2618,11 @@
             editingTaskId = null;
             document.getElementById('modalTitle').textContent = 'Add New Task';
             document.getElementById('taskForm').reset();
-            document.getElementById('taskPriority').value = 'P2';
+            updatePrioritySelects();
             updateTaskCategorySelects();
+            updateModalFieldVisibility();
+            applyFieldDefaults();
+            setupFieldValidationListeners();
             showModal('taskModal');
         }
 
@@ -2039,7 +2703,10 @@
                 
                 const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
                 const manifestURL = URL.createObjectURL(manifestBlob);
-                document.getElementById('pwa-manifest').href = manifestURL;
+                const manifestLink = document.getElementById('pwa-manifest');
+                if (manifestLink) {
+                    manifestLink.href = manifestURL;
+                }
             }
         }
 
@@ -2301,7 +2968,9 @@ Happy task tracking! ✅`
         
         // Data Persistence
         function saveWorkspaces() {
+            console.log('saveWorkspaces called - saving:', workspaces);
             localStorage.setItem('aiTaskTracker_workspaces', JSON.stringify(workspaces));
+            console.log('saveWorkspaces completed');
         }
 
         // Click outside modal to close
