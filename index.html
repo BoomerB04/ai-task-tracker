@@ -1018,12 +1018,19 @@
                                             <!-- Firebase Scripts -->
                                                 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
                                                 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+                                                <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     </head>
 <body>
     <div class="container">
         <div class="app-header">
             <h1 id="app-name">🤖 AI Task Tracker</h1>
             <div class="app-controls">
+                <button class="btn btn-secondary" onclick="exportData()" title="Export Data">
+                    📤 Export
+                </button>
+                <button class="btn btn-secondary" onclick="importData()" title="Import Data">
+                    📥 Import
+                </button>
                 <button class="btn btn-secondary" onclick="showSettingsModal()" title="App Settings">
                     ⚙️
                 </button>
@@ -1312,116 +1319,75 @@
                 firebase.initializeApp(firebaseConfig);
                 const database = firebase.database();
 
-                // User Authentication with improved flow
+                // Firebase Auth implementation
                 function promptForUsername() {
-                    // Check if user wants to stay logged in
-                    const rememberMe = localStorage.getItem('aiTaskTracker_rememberMe');
-                    if (currentUser && rememberMe === 'true') {
-                        // User is remembered, load data directly
-                        userDataRef = database.ref(`users/${currentUser}`);
-                        loadDataFromFirebase();
-                        return;
-                    }
-                    
-                    // Show login/signup choice
-                    const choice = confirm('Do you have an existing account?\n\nClick "OK" for existing account\nClick "Cancel" to create new account');
-                    
-                    if (choice) {
-                        // Existing user login
-                        showLoginForm();
-                    } else {
-                        // New user signup
-                        showSignupForm();
-                    }
-                }
-
-                function showLoginForm() {
-                    const username = prompt('Enter your username:');
-                    if (!username) return;
-                    
-                    const cleanUsername = username.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-                    const pin = prompt('Enter your 4-digit PIN:');
-                    
-                    if (!pin || pin.length !== 4 || !/^\d{4}$/.test(pin)) {
-                        alert('PIN must be exactly 4 digits');
-                        return;
-                    }
-                    
-                    // Verify credentials with Firebase
-                    const testRef = database.ref(`users/${cleanUsername}`);
-                    testRef.once('value').then(snapshot => {
-                        const userData = snapshot.val();
-                        if (userData && userData.pin === pin) {
-                            // Successful login
-                            currentUser = cleanUsername;
-                            localStorage.setItem('aiTaskTracker_currentUser', currentUser);
-                            localStorage.setItem('aiTaskTracker_userPin', pin);
-                            
-                            // Ask about remembering
-                            const remember = confirm('Remember me on this device?\n\n(You won\'t need to enter credentials again)');
-                            localStorage.setItem('aiTaskTracker_rememberMe', remember.toString());
-                            
+                    // Check if user is already signed in
+                    firebase.auth().onAuthStateChanged(function(user) {
+                        if (user) {
+                            // User is signed in
+                            currentUser = user.uid;
                             userDataRef = database.ref(`users/${currentUser}`);
                             loadDataFromFirebase();
                         } else {
-                            alert('Incorrect username or PIN');
-                            promptForUsername();
+                            // User is signed out, show login choice
+                            showAuthChoice();
                         }
-                    }).catch(error => {
-                        console.error('Login error:', error);
-                        alert('Login failed. Please try again.');
-                        promptForUsername();
                     });
                 }
 
-                    function showSignupForm() {
-                        const username = prompt('Create a username (letters and numbers only):');
-                        if (!username) return;
-                        
-                        const cleanUsername = username.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-                        if (cleanUsername !== username.trim().toLowerCase()) {
-                            alert('Username can only contain letters and numbers');
-                            showSignupForm();
-                            return;
-                        }
-                        
-                        // Check if username exists first
-                        const testRef = database.ref(`users/${cleanUsername}`);
-                        testRef.once('value').then(snapshot => {
-                            if (snapshot.exists()) {
-                                alert('Username already taken. Please choose another.');
-                                showSignupForm();
-                                return;
+                function showAuthChoice() {
+                    const choice = confirm('Do you have an account?\n\nClick "OK" to sign in\nClick "Cancel" to create account');
+                    
+                    if (choice) {
+                        showSignInForm();
+                    } else {
+                        showSignUpForm();
+                    }
+                }
+
+                function showSignInForm() {
+                    const email = prompt('Enter your email:');
+                    if (!email) return;
+                    
+                    const password = prompt('Enter your password:');
+                    if (!password) return;
+                    
+                    firebase.auth().signInWithEmailAndPassword(email, password)
+                        .then((userCredential) => {
+                            // Success - auth state change will handle the rest
+                        })
+                        .catch((error) => {
+                            alert('Sign in failed: ' + error.message);
+                            if (error.code === 'auth/user-not-found') {
+                                const createAccount = confirm('Account not found. Create new account with this email?');
+                                if (createAccount) {
+                                    createAccountWithCredentials(email, password);
+                                }
+                            } else {
+                                showAuthChoice();
                             }
-                            
-                            // Username is available, continue with PIN creation
-                            const pin = prompt('Create a 4-digit PIN:');
-                            if (!pin || pin.length !== 4 || !/^\d{4}$/.test(pin)) {
-                                alert('PIN must be exactly 4 digits');
-                                showSignupForm();
-                                return;
-                            }
-                            
-                            const confirmPin = prompt('Confirm your 4-digit PIN:');
-                            if (pin !== confirmPin) {
-                                alert('PINs do not match');
-                                showSignupForm();
-                                return;
-                            }
-                            
-                            // Create account
-                            currentUser = cleanUsername;
-                            localStorage.setItem('aiTaskTracker_currentUser', currentUser);
-                            localStorage.setItem('aiTaskTracker_userPin', pin);
-                            
-                            const remember = confirm('Remember me on this device?\n\n(You won\'t need to enter credentials again)');
-                            localStorage.setItem('aiTaskTracker_rememberMe', remember.toString());
-                            
-                            userDataRef = database.ref(`users/${currentUser}`);
-                            
-                            // Save PIN and initial data to Firebase
+                        });
+                }
+
+                function showSignUpForm() {
+                    const email = prompt('Enter your email:');
+                    if (!email) return;
+                    
+                    const password = prompt('Create a password (6+ characters):');
+                    if (!password || password.length < 6) {
+                        alert('Password must be at least 6 characters');
+                        showSignUpForm();
+                        return;
+                    }
+                    
+                    createAccountWithCredentials(email, password);
+                }
+
+                function createAccountWithCredentials(email, password) {
+                    firebase.auth().createUserWithEmailAndPassword(email, password)
+                        .then((userCredential) => {
+                            // Initialize default data for new user
                             const initialData = {
-                                pin: pin,
                                 workspaces: {
                                     'Work': {
                                         emoji: '💼',
@@ -1441,34 +1407,24 @@
                                 lastUpdated: Date.now()
                             };
                             
-                            userDataRef.set(initialData).then(() => {
-                                loadDataFromFirebase();
-                            }).catch(error => {
-                                console.error('Account creation error:', error);
-                                alert('Failed to create account. Please try again.');
-                            });
-                            
-                        }).catch(error => {
-                            console.error('Username check error:', error);
-                            alert('Connection error. Please try again.');
+                            const newUserRef = database.ref(`users/${userCredential.user.uid}`);
+                            newUserRef.set(initialData);
+                        })
+                        .catch((error) => {
+                            alert('Account creation failed: ' + error.message);
+                            showAuthChoice();
                         });
-                    }
+                }
 
                 function logOut() {
                     if (confirm('Are you sure you want to log out?')) {
-                        // Clear all stored data
-                        localStorage.removeItem('aiTaskTracker_currentUser');
-                        localStorage.removeItem('aiTaskTracker_userPin');
-                        localStorage.removeItem('aiTaskTracker_rememberMe');
-                        localStorage.removeItem('aiTaskTracker_lastUpdate');
-                        
-                        // Reset app state
-                        currentUser = '';
-                        userDataRef = null;
-                        workspaces = {};
-                        
-                        // Reload page to restart
-                        location.reload();
+                        firebase.auth().signOut().then(() => {
+                            // Clear local data
+                            currentUser = '';
+                            userDataRef = null;
+                            workspaces = {};
+                            location.reload();
+                        });
                     }
                 }
                 
@@ -3369,6 +3325,67 @@ Happy task tracking! ✅`
                     }
                 }
             });
+        }
+        
+        // Export/Import Functions
+        function exportData() {
+            const exportData = {
+                version: "2.0",
+                exportDate: new Date().toISOString(),
+                username: currentUser,
+                workspaces: workspaces,
+                currentWorkspace: currentWorkspace,
+                appName: appName
+            };
+            
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `task-tracker-backup-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+        }
+
+        function importData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const importedData = JSON.parse(e.target.result);
+                        
+                        if (!importedData.version || !importedData.workspaces) {
+                            alert('Invalid backup file format');
+                            return;
+                        }
+                        
+                        if (confirm('This will replace all your current data. Are you sure?')) {
+                            workspaces = importedData.workspaces;
+                            currentWorkspace = importedData.currentWorkspace || 'Work';
+                            appName = importedData.appName || 'AI Task Tracker';
+                            
+                            saveWorkspaces();
+                            renderWorkspaceTabs();
+                            switchToWorkspace(currentWorkspace);
+                            updateAppName();
+                            
+                            alert('Data imported successfully!');
+                        }
+                    } catch (error) {
+                        alert('Error reading backup file: ' + error.message);
+                    }
+                };
+                reader.readAsText(file);
+            };
+            
+            input.click();
         }
         
         // Click outside modal to close
