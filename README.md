@@ -1,22 +1,32 @@
 🤖 AI Task Tracker
-Show Image
-Show Image
-Show Image
+A smart, cross-device task management app with AI-powered natural language input and real-time syncing. Your tasks sync instantly across all devices with simple username + PIN security.
+🚀 Quick Start (2 minutes)
+Step 1: Open the App
+Go to: https://boomerb04.github.io/ai-task-tracker/
+Step 2: Create Your Account
 
-A smart, cross-device task management app with AI-powered natural language input parsing. Works offline and syncs your data across all devices while keeping it completely private.
+Enter a username (like "johnsmith")
+Create a 4-digit PIN (like "1234")
+Your secure space is created instantly
 
+Step 3: Add Your First Task
+Type naturally: "Review presentation by Friday, high priority, 2 hours"
+Watch it automatically organize into a perfect task!
+Step 4: Access Everywhere
+
+On your phone: Visit the same URL
+Enter your username + PIN
+All your tasks appear instantly
+
+That's it! Your tasks now sync in real-time across all your devices.
 ✨ What Makes This Special
-<table> <tr> <td width="50%">
-🧠 AI-Powered Input
-
-"Review API docs by Friday, high priority, 2 hours"
-↓ Automatically becomes: ↓
-
-📝 Task: Review API docs
-📅 Due: This Friday
-🔥 Priority: High
-⏱️ Time: 2 hours
-</td> <td width="50%">
+🧠 AI-Powered Task Creation
+Type: "Call doctor tomorrow, personal, 30 minutes"
+↓ Automatically becomes ↓
+📝 Task: Call doctor
+📅 Due: Tomorrow  
+🏷️ Category: Personal
+⏱️ Time: 30 minutes
 📊 Smart Organization
 
 🚨 Overdue - Fix these first
@@ -24,143 +34,130 @@ A smart, cross-device task management app with AI-powered natural language input
 📆 This Week - Plan ahead
 🗓️ Next Week - Prepare
 🔮 Future - Long-term goals
-</td> </tr> </table>
+
 🎯 Core Features
-Feature	Description
-🗣️ Natural Language	"Call mom tomorrow, personal, 30 mins" → Perfectly parsed task
-📂 Multi-Workspace	Separate Work/Personal or create custom project spaces
-🏷️ Custom Types	Create categories like "Urgent", "Learning", "Health"
-⚡ Priority Levels	P0 (Critical) → P3 (Low) for smart task ranking
-📱 Mobile First	Touch-optimized, works great on phones
-🌙 Auto Theme	Adapts to your system's dark/light mode
-💾 Works Offline	No internet? No problem.
-🔄 Real-time Sync	Your tasks everywhere, updated automatically
-🚀 Get Your Private Copy
-<div align="center">
-Choose Your Adventure
-</div> <table> <tr> <th width="50%">🏃‍♂️ Quick Start</th> <th width="50%">🛡️ GitHub Account (Recommended)</th> </tr> <tr> <td>
-Best for: Immediate gratification Time: 2 minutes
+FeatureDescription🗣️ Natural Language"Finish report by Monday, work category, high priority" → Perfect task🔄 Real-time SyncUsername + PIN = instant access everywhere📂 Multi-WorkspaceSeparate Work/Personal or create custom projects🏷️ Custom CategoriesCreate colored categories with emojis⚡ Priority SystemsChoose P0-P3 or Low-High priority levels🎯 Smart DefaultsPre-fill common values per workspace📱 Mobile OptimizedTouch-friendly, works great on phones🌙 Auto ThemeAdapts to your system's dark/light mode💾 Offline ReadyWorks without internet, syncs when back online🎤 Voice InputSpeak your tasks naturally
+📱 Install as Native App
+iPhone/iPad
 
-Show Image
-
-Click the button above
-Use app immediately
-Click "Sync" when ready
-Follow 6-step guide
-Bookmark your URL
-✅ Pros:
-
-Instant access
-Zero accounts needed
-Completely private
-⚠️ Cons:
-
-Lose URL = lose data
-No recovery options
-</td> <td>
-Best for: Maximum security & control Time: 5 minutes
-
-Show Image
-
-Create free GitHub account
-Open the app
-Follow sync setup guide
-Data stored in your account
-✅ Pros:
-
-Never lose your data
-Account-based recovery
-View/backup on GitHub
-Multiple trackers possible
-⚠️ Cons:
-
-Requires account signup
-Extra 3 minutes setup
-</td> </tr> </table>
-🔒 Privacy & Security
-<div align="center">
-Your Data, Your Control
-</div>
-What We Don't Do	What We Do
-❌ Store your data on our servers	✅ Use your personal GitHub storage
-❌ Track or analyze your tasks	✅ Keep everything client-side
-❌ Share data between users	✅ Complete user isolation
-❌ Require personal information	✅ Optional anonymous usage
-🛡️ Zero-Knowledge Architecture: Your tasks are stored in your personal GitHub Gist. We never see, store, or have access to your data.
-
-📱 Installation as Native App
-<details> <summary><b>📱 iPhone/iPad</b></summary>
-Open in Safari
+Open https://boomerb04.github.io/ai-task-tracker/ in Safari
 Tap Share button (box with arrow)
 Select "Add to Home Screen"
 Tap "Add"
-✅ Now works like any native app!
+Now works like any native app!
 
-</details> <details> <summary><b>🤖 Android</b></summary>
-Open in Chrome
+Android
+
+Open https://boomerb04.github.io/ai-task-tracker/ in Chrome
 Tap menu (three dots)
-Select "Add to Home Screen" or "Install App"
+Select "Add to Home Screen"
 Tap "Install"
-✅ Installed as a PWA!
+Installed as a PWA!
 
-</details> <details> <summary><b>💻 Mac/Windows</b></summary>
-Open in Chrome or Edge
+Mac/Windows
+
+Open https://boomerb04.github.io/ai-task-tracker/ in Chrome or Edge
 Look for install button in address bar
 Click to install as desktop app
-✅ Now in your applications folder!
+Now in your applications folder!
 
-</details>
-🔄 How Sync Works
-<div align="center">
-Your Device ➜ Your Private GitHub Gist ➜ All Your Devices
+🔒 Privacy & Security
+Your Data, Your Control
 
-📱 Phone ⬅️ 🔄 ➡️ 💻 Laptop ⬅️ 🔄 ➡️ 🖥️ Desktop
+✅ Data stored in secure Firebase database
+✅ Only accessible with your username + PIN
+✅ No personal information required
+✅ Complete user isolation
+✅ Zero knowledge architecture
 
-</div>
-📝 Create: App helps you create a private GitHub Gist (like a private cloud file)
-🔄 Sync: Tasks auto-save to your private file every 30 seconds
-🌐 Access: Open app on any device, enter your sync URL, get all your data
-🔒 Privacy: Only you have the link to your data file
-🆕 Automatic Updates
-When we release new features:
+What We Don't Do
 
-✅ You get updates automatically when you refresh
-✅ Your data and settings are preserved
-✅ No re-download or re-setup needed
-✅ Seamless experience across all devices
+❌ Store your personal information
+❌ Share data between users
+❌ Track or analyze your tasks
+❌ Require email or phone verification
+
+🛠️ Advanced Features
+Workspace Customization
+
+Field Configuration: Choose which fields appear (due dates, priorities, time estimates)
+Priority Systems: Select P0-P3 or Low-High priority levels per workspace
+Smart Defaults: Pre-fill common values to speed up task creation
+Custom Categories: Create colored, emoji-enhanced categories
+
+AI Text Parsing
+Understands natural language like:
+
+"Meeting with client next Tuesday, work category, 1 hour"
+"Buy groceries tomorrow, personal, low priority"
+"Finish project proposal by 12/15, critical priority"
+
+Voice Input
+
+Click the microphone button
+Speak naturally: "Schedule dentist appointment for next Monday"
+Automatically converts to structured task
+
+🔄 How Real-time Sync Works
+Your Phone ↔️ Secure Database ↔️ Your Laptop ↔️ Your Desktop
+
+Simple Login: Username + PIN creates your secure space
+Instant Sync: Changes appear immediately on all devices
+Universal Access: Same credentials work anywhere
+Real-time Updates: See changes as they happen
+
 🆘 Troubleshooting
-<details> <summary><b>🔄 Sync not working</b></summary>
-Ensure your GitHub Gist URL ends with /raw/my-tasks.json
-Check that your Gist is public or you're using the correct raw URL
-Try creating a new Gist if the old one isn't working
-</details> <details> <summary><b>📱 App won't load</b></summary>
-Try refreshing the page (Ctrl+R or Cmd+R)
-Clear browser cache and cookies
-Make sure you're using a modern browser (Chrome, Safari, Firefox, Edge)
-</details> <details> <summary><b>🔗 Lost sync URL</b></summary>
-If you have a GitHub account: Check your Gists at gist.github.com
-If anonymous: Unfortunately, the data cannot be recovered
-This is why we recommend the GitHub account option!
-</details> <details> <summary><b>🤖 AI parsing fails</b></summary>
-The AI feature requires setting up sync first
-Make sure you have an internet connection
+Can't Access Tasks:
+
+Double-check username and PIN (case-sensitive)
+Ensure internet connection for sync
+Try refreshing the page
+
+Lost Username/PIN:
+
+Unfortunately, credentials cannot be recovered
+This ensures maximum privacy and security
+Choose memorable but secure credentials
+
+App Won't Load:
+
+Clear browser cache and refresh
+Try incognito/private browsing mode
+Use modern browser (Chrome, Safari, Firefox, Edge)
+
+AI Parsing Issues:
+
+Requires internet connection
 Try simpler language: "Task name, due date, priority"
-</details>
+Use manual task entry as backup
+
+Sync Not Working:
+
+Check internet connection
+Verify you're using the same username/PIN
+Try logging out and back in
+
+🆕 Latest Updates
+
+✅ Firebase real-time syncing with PIN security
+✅ Custom categories with emojis and colors
+✅ Per-workspace field configuration
+✅ Smart default values for faster task creation
+✅ Improved AI natural language parsing
+✅ Enhanced mobile experience
+✅ Voice input with speech recognition
+✅ Offline-first architecture
+
 🛠️ Technical Details
-<details> <summary>For the technically curious</summary>
-Framework: Pure HTML/CSS/JavaScript (no dependencies)
-Storage: GitHub Gists API for sync, localStorage for offline
-AI Integration: Claude API for natural language parsing
+
+Frontend: Pure HTML/CSS/JavaScript (no frameworks)
+Backend: Firebase Realtime Database
+AI: Natural language processing for task parsing
+Size: ~60KB total app size
 Compatibility: All modern browsers (Chrome 60+, Safari 12+, Firefox 60+)
-Size: ~50KB total app size
 Performance: Offline-first, instant loading
-</details>
-<div align="center">
-🎉 Ready to Get Organized?
-Show Image
 
-Built with ❤️ for people who want smart task management without sacrificing privacy
 
-⭐ Star this repo if you find it useful!
-
-</div>
+Ready to transform your productivity?
+Visit https://boomerb04.github.io/ai-task-tracker/ and get organized in under 2 minutes.
+Your tasks will be perfectly synced across all your devices with the security of username + PIN authentication.
