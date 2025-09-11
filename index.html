@@ -401,6 +401,92 @@
                                                     gap: 12px;
                                                     flex-wrap: wrap;
                                                 }
+
+                                                .task-header-compact {
+                                                    display: flex;
+                                                    justify-content: space-between;
+                                                    align-items: flex-start;
+                                                    gap: 16px;
+                                                }
+
+                                                .task-content {
+                                                    flex: 1;
+                                                    min-width: 0;
+                                                }
+
+                                                .task-meta-inline {
+                                                    display: flex;
+                                                    align-items: center;
+                                                    gap: 8px;
+                                                    flex-wrap: wrap;
+                                                    margin-top: 6px;
+                                                }
+
+                                                .task-meta-inline .meta-item {
+                                                    padding: 2px 6px;
+                                                    border-radius: 8px;
+                                                    font-size: 11px;
+                                                    font-weight: 600;
+                                                    white-space: nowrap;
+                                                }
+
+                                                .task-title-line {
+                                                    display: flex;
+                                                    align-items: baseline;
+                                                    flex-wrap: wrap;
+                                                    gap: 0;
+                                                }
+
+                                                .task-name {
+                                                    font-size: 16px;
+                                                    font-weight: 600;
+                                                    color: var(--text-primary);
+                                                    margin-right: 8px;
+                                                    flex-shrink: 0;
+                                                }
+
+                                                .task-meta-text {
+                                                    font-size: 12px;
+                                                    color: var(--text-secondary);
+                                                    font-weight: 500;
+                                                    flex-shrink: 1;
+                                                    min-width: 0;
+                                                }
+                                                
+                                                .task-notes-toggle {
+                                                    margin-top: 8px;
+                                                }
+
+                                                .notes-toggle-btn {
+                                                    background: none;
+                                                    border: none;
+                                                    color: var(--text-secondary);
+                                                    font-size: 12px;
+                                                    cursor: pointer;
+                                                    padding: 4px 0;
+                                                }
+
+                                                .notes-toggle-btn:hover {
+                                                    color: var(--text-primary);
+                                                }
+
+                                                .task-notes {
+                                                    margin-top: 6px;
+                                                    padding: 8px;
+                                                    background: var(--bg-tertiary);
+                                                    border-radius: 6px;
+                                                    font-size: 13px;
+                                                    color: var(--text-secondary);
+                                                    border-left: 3px solid var(--blue);
+                                                }
+
+                                                .toggle-icon {
+                                                    transition: transform 0.2s;
+                                                }
+
+                                                .toggle-icon.expanded {
+                                                    transform: rotate(180deg);
+                                                }
                                                 
                                                 .meta-item {
                                                     padding: 4px 8px;
@@ -833,6 +919,22 @@
                                                     .header-buttons .btn:last-child {
                                                         grid-column: 1 / -1;
                                                     }
+                                                    
+                                                    .header-buttons .btn:last-child {
+                                                            grid-column: 1 / -1;
+                                                        }
+                                                        
+                                                        .task-title-line {
+                                                            flex-direction: column;
+                                                            align-items: flex-start;
+                                                            gap: 4px;
+                                                        }
+                                                        
+                                                        .task-name {
+                                                            margin-right: 0;
+                                                            margin-bottom: 2px;
+                                                        }
+                                                    }
                                                 }
                                                 
                                                 @media (max-width: 428px) {
@@ -1136,6 +1238,10 @@
                     </select>
                     <div id="taskCategoryError" class="error-message">Category is required</div>
                 </div>
+                <div class="form-group" id="notesGroup">
+                    <label class="form-label">Notes (Optional)</label>
+                    <textarea id="taskNotes" class="form-input" placeholder="Additional details, context, or notes..." rows="3" style="resize: vertical; min-height: 60px;"></textarea>
+                </div>
                 <div style="display: flex; gap: 10px; margin-top: 24px;">
                     <button type="submit" class="btn btn-green" style="flex: 1;">Save Task</button>
                     <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
@@ -1242,10 +1348,10 @@
                     }
                     
                     // Verify credentials with Firebase
-                    const testRef = database.ref(`users/${cleanUsername}/pin`);
+                    const testRef = database.ref(`users/${cleanUsername}`);
                     testRef.once('value').then(snapshot => {
-                        const storedPin = snapshot.val();
-                        if (storedPin === pin) {
+                        const userData = snapshot.val();
+                        if (userData && userData.pin === pin) {
                             // Successful login
                             currentUser = cleanUsername;
                             localStorage.setItem('aiTaskTracker_currentUser', currentUser);
@@ -1261,60 +1367,92 @@
                             alert('Incorrect username or PIN');
                             promptForUsername();
                         }
-                    }).catch(() => {
-                        alert('Username not found');
+                    }).catch(error => {
+                        console.error('Login error:', error);
+                        alert('Login failed. Please try again.');
                         promptForUsername();
                     });
                 }
 
-                function showSignupForm() {
-                    const username = prompt('Create a username (letters and numbers only):');
-                    if (!username) return;
-                    
-                    const cleanUsername = username.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-                    if (cleanUsername !== username.trim().toLowerCase()) {
-                        alert('Username can only contain letters and numbers');
-                        return;
-                    }
-                    
-                    const pin = prompt('Create a 4-digit PIN:');
-                    if (!pin || pin.length !== 4 || !/^\d{4}$/.test(pin)) {
-                        alert('PIN must be exactly 4 digits');
-                        return;
-                    }
-                    
-                    const confirmPin = prompt('Confirm your 4-digit PIN:');
-                    if (pin !== confirmPin) {
-                        alert('PINs do not match');
-                        return;
-                    }
-                    
-                    currentUser = cleanUsername;
-                    localStorage.setItem('aiTaskTracker_currentUser', currentUser);
-                    localStorage.setItem('aiTaskTracker_userPin', pin);
-                    
-                    userDataRef = database.ref(`users/${currentUser}`);
-                    
-                    // Check if username already exists
-                    userDataRef.once('value').then(snapshot => {
-                        if (snapshot.exists()) {
-                            alert('Username already taken. Please choose another.');
-                            localStorage.removeItem('aiTaskTracker_currentUser');
-                            localStorage.removeItem('aiTaskTracker_userPin');
-                            currentUser = '';
-                            promptForUsername();
-                        } else {
-                            // Ask about remembering
+                    function showSignupForm() {
+                        const username = prompt('Create a username (letters and numbers only):');
+                        if (!username) return;
+                        
+                        const cleanUsername = username.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+                        if (cleanUsername !== username.trim().toLowerCase()) {
+                            alert('Username can only contain letters and numbers');
+                            showSignupForm();
+                            return;
+                        }
+                        
+                        // Check if username exists first
+                        const testRef = database.ref(`users/${cleanUsername}`);
+                        testRef.once('value').then(snapshot => {
+                            if (snapshot.exists()) {
+                                alert('Username already taken. Please choose another.');
+                                showSignupForm();
+                                return;
+                            }
+                            
+                            // Username is available, continue with PIN creation
+                            const pin = prompt('Create a 4-digit PIN:');
+                            if (!pin || pin.length !== 4 || !/^\d{4}$/.test(pin)) {
+                                alert('PIN must be exactly 4 digits');
+                                showSignupForm();
+                                return;
+                            }
+                            
+                            const confirmPin = prompt('Confirm your 4-digit PIN:');
+                            if (pin !== confirmPin) {
+                                alert('PINs do not match');
+                                showSignupForm();
+                                return;
+                            }
+                            
+                            // Create account
+                            currentUser = cleanUsername;
+                            localStorage.setItem('aiTaskTracker_currentUser', currentUser);
+                            localStorage.setItem('aiTaskTracker_userPin', pin);
+                            
                             const remember = confirm('Remember me on this device?\n\n(You won\'t need to enter credentials again)');
                             localStorage.setItem('aiTaskTracker_rememberMe', remember.toString());
                             
-                            // Save PIN to Firebase and load data
-                            userDataRef.child('pin').set(pin).then(() => {
+                            userDataRef = database.ref(`users/${currentUser}`);
+                            
+                            // Save PIN and initial data to Firebase
+                            const initialData = {
+                                pin: pin,
+                                workspaces: {
+                                    'Work': {
+                                        emoji: '💼',
+                                        tasks: [],
+                                        completedTasks: [],
+                                        taskCategories: []
+                                    },
+                                    'Personal': {
+                                        emoji: '🏠',
+                                        tasks: [],
+                                        completedTasks: [],
+                                        taskCategories: []
+                                    }
+                                },
+                                currentWorkspace: 'Work',
+                                appName: '🤖 AI Task Tracker',
+                                lastUpdated: Date.now()
+                            };
+                            
+                            userDataRef.set(initialData).then(() => {
                                 loadDataFromFirebase();
+                            }).catch(error => {
+                                console.error('Account creation error:', error);
+                                alert('Failed to create account. Please try again.');
                             });
-                        }
-                    });
-                }
+                            
+                        }).catch(error => {
+                            console.error('Username check error:', error);
+                            alert('Connection error. Please try again.');
+                        });
+                    }
 
                 function logOut() {
                     if (confirm('Are you sure you want to log out?')) {
@@ -1947,7 +2085,7 @@
 
         function formatDateFromCalendar(dateStr) {
             if (!dateStr) return '';
-            const date = new Date(dateStr);
+            const date = new Date(dateStr + 'T00:00:00'); // Add time to prevent timezone issues
             const month = date.getMonth() + 1;
             const day = date.getDate();
             return `${month}/${day}`;
@@ -2050,16 +2188,25 @@
             // Remove any existing highlights
             document.querySelectorAll('.missing-field').forEach(el => el.classList.remove('missing-field'));
             
-            // Add missing field indicators
+            // Add missing field indicators only for fields that are actually using defaults
             missingFields.forEach(field => {
                 let element;
-                if (field === 'due date') element = document.getElementById('taskDate').parentNode;
-                else if (field === 'time estimate') element = document.getElementById('taskTime').parentNode;
-                else if (field === 'category') element = document.getElementById('taskCategory').parentNode;
+                let isActualDefault = false;
                 
-                if (element) {
+                if (field === 'due date') {
+                    element = document.getElementById('taskDate').parentNode;
+                    isActualDefault = document.getElementById('taskDate').value === getTodayDateString();
+                } else if (field === 'time estimate') {
+                    element = document.getElementById('taskTime').parentNode;
+                    isActualDefault = document.getElementById('taskTime').value === '60';
+                } else if (field === 'category') {
+                    element = document.getElementById('taskCategory').parentNode;
+                    isActualDefault = document.getElementById('taskCategory').value === 'General';
+                }
+                
+                // Only highlight if it's actually using a default value
+                if (element && isActualDefault) {
                     element.classList.add('missing-field');
-                    // Add a note about what was detected vs missing
                     if (!element.querySelector('.field-note')) {
                         const note = document.createElement('div');
                         note.className = 'field-note';
@@ -2286,6 +2433,7 @@
                 document.getElementById('taskPriority').value = task.priority;
                 document.getElementById('taskTime').value = task.timeEstimate;
                 document.getElementById('taskCategory').value = task.taskCategory || 'General';
+                document.getElementById('taskNotes').value = task.notes || '';
                 updatePrioritySelects();
                 updateTaskCategorySelects();
                 updateModalFieldVisibility();
@@ -2384,6 +2532,11 @@
                 taskData.taskCategory = 'General';
             }
 
+            // Add notes support
+            if (document.getElementById('taskNotes')) {
+                taskData.notes = document.getElementById('taskNotes').value.trim();
+            }
+            
             if (editingTaskId) {
                 const tasks = getCurrentWorkspace().tasks;
                 const taskIndex = tasks.findIndex(t => t.id === editingTaskId);
@@ -2501,8 +2654,17 @@
         function renderTaskCard(task, isArchived = false) {
             const enabledFields = getCurrentEnabledFields();
             
-            // Only show category if categories are enabled and task has a non-General category
-            let taskCategoryDisplay = '';
+            // Build metadata items as plain text (no spans yet)
+            let metaItems = [];
+            
+            if (enabledFields.dueDate) {
+                metaItems.push(`📅 ${task.dueDate}`);
+            }
+            
+            if (enabledFields.priorityLowHigh || enabledFields.priorityP0P3) {
+                metaItems.push(`${task.priority}`);
+            }
+            
             if (enabledFields.categories && task.taskCategory && task.taskCategory !== 'General') {
                 const categories = getCurrentTaskCategories();
                 const categoryObj = categories.find(cat => {
@@ -2513,57 +2675,50 @@
                 if (categoryObj) {
                     const categoryName = typeof categoryObj === 'string' ? categoryObj : categoryObj.name;
                     const categoryEmoji = typeof categoryObj === 'string' ? '' : (categoryObj.emoji || '');
-                    const categoryColor = typeof categoryObj === 'string' ? 'blue' : (categoryObj.color || 'blue');
-                    
                     const displayText = categoryEmoji ? `${categoryEmoji} ${categoryName}` : categoryName;
-                    taskCategoryDisplay = `<span class="meta-item category-${categoryColor}">${displayText}</span>`;
+                    metaItems.push(displayText);
                 }
             }
             
-            // Only show priority if either priority system is enabled
-            const priorityDisplay = (enabledFields.priorityLowHigh || enabledFields.priorityP0P3) ?
-                `<span class="meta-item priority-${task.priority.toLowerCase()}">${task.priority}</span>` :
-                '';
+            if (enabledFields.timeEstimate) {
+                metaItems.push(`⏱️ ${task.timeEstimate}m`);
+            }
             
-            // Only show time estimate if enabled
-            const timeEstimateDisplay = enabledFields.timeEstimate ?
-                `<span class="meta-item">⏱️ ${task.timeEstimate}m</span>` :
-                '';
+            if (isArchived) {
+                metaItems.push(`✅ ${task.completedAt}`);
+            }
             
-            // Only show due date if enabled
-            const dueDateDisplay = enabledFields.dueDate ?
-                `<span class="meta-item">📅 ${isArchived ? 'Was due:' : 'Due:'} ${task.dueDate}</span>` :
-                '';
-                
+            // Join meta items with bullet separator
+            const metaText = metaItems.length > 0 ? ' • ' + metaItems.join(' • ') : '';
+            
             return `
                 <div class="task-card ${isArchived ? 'archive-task' : ''}">
-                    <div class="task-header">
-                        <div class="task-title">${task.name}</div>
+                    <div class="task-header-compact">
+                        <div class="task-content">
+                            <div class="task-title-line">
+                                <span class="task-name">${task.name}</span><span class="task-meta-text">${metaText}</span>
+                            </div>
+                            <div class="task-notes" id="notes-${task.id}" style="display: none; margin-top: 8px; padding: 8px; background: var(--bg-tertiary); border-radius: 6px; font-size: 13px; color: var(--text-secondary); border-left: 3px solid var(--blue);">
+                                ${task.notes || ''}
+                            </div>
+                        </div>
                         <div class="task-actions">
-                            ${!isArchived ? `
-                                <button class="action-btn complete-btn" onclick="completeTask(${task.id})" title="Complete">
-                                    ✓
-                                </button>
-                                <button class="action-btn edit-btn" onclick="editTask(${task.id})" title="Edit">
-                                    ✏️
+                            ${task.notes ? `
+                                <button class="action-btn edit-btn" onclick="toggleNotes(${task.id})" title="View Notes">
+                                    📝
                                 </button>
                             ` : ''}
-                            <button class="action-btn delete-btn" onclick="${isArchived ? 'deleteFromArchive' : 'deleteTask'}(${task.id})" title="Delete">
-                                🗑️
-                            </button>
+                            ${!isArchived ? `
+                                <button class="action-btn complete-btn" onclick="completeTask(${task.id})" title="Complete">✓</button>
+                                <button class="action-btn edit-btn" onclick="editTask(${task.id})" title="Edit">✏️</button>
+                            ` : ''}
+                            <button class="action-btn delete-btn" onclick="${isArchived ? 'deleteFromArchive' : 'deleteTask'}(${task.id})" title="Delete">🗑️</button>
                         </div>
-                    </div>
-                    <div class="task-meta">
-                        ${dueDateDisplay}
-                        ${priorityDisplay}
-                        ${taskCategoryDisplay}
-                        ${timeEstimateDisplay}
-                        ${isArchived ? `<span class="meta-item">✅ ${task.completedAt}</span>` : ''}
                     </div>
                 </div>
             `;
         }
-
+        
         function renderArchive() {
             const container = document.getElementById('taskSections');
             const emptyState = document.getElementById('emptyState');
@@ -3087,6 +3242,19 @@ Happy task tracking! ✅`
             }
         }
 
+        function toggleNotes(taskId) {
+            const notesDiv = document.getElementById(`notes-${taskId}`);
+            const toggleIcon = document.querySelector(`button[onclick="toggleNotes(${taskId})"] .toggle-icon`);
+            
+            if (notesDiv.style.display === 'none') {
+                notesDiv.style.display = 'block';
+                toggleIcon.classList.add('expanded');
+            } else {
+                notesDiv.style.display = 'none';
+                toggleIcon.classList.remove('expanded');
+            }
+        }
+        
         function stopVoiceInput(recognition) {
             recognition.stop();
             const finalText = document.getElementById('quickInput').value.trim();
