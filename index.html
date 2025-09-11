@@ -928,6 +928,9 @@
                 <button class="btn btn-green" onclick="showSyncModal()" title="Sync Settings">
                     🔄 Sync
                 </button>
+                <button class="btn btn-secondary" onclick="logOut()" title="Log Out">
+                    🚪 Logout
+                </button>
             </div>
         </div>
 
@@ -1203,58 +1206,131 @@
                 firebase.initializeApp(firebaseConfig);
                 const database = firebase.database();
 
-                // User Authentication with PIN
+                // User Authentication with improved flow
                 function promptForUsername() {
-                    if (!currentUser) {
-                        // New user - create account
-                        const username = prompt('Enter a username for syncing across devices:');
-                        if (!username) return;
-                        
-                        const cleanUsername = username.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-                        const pin = prompt('Create a 4-digit PIN to secure your account:');
-                        
-                        if (!pin || pin.length !== 4 || !/^\d{4}$/.test(pin)) {
-                            alert('PIN must be exactly 4 digits');
-                            return;
-                        }
-                        
-                        currentUser = cleanUsername;
-                        localStorage.setItem('aiTaskTracker_currentUser', currentUser);
-                        localStorage.setItem('aiTaskTracker_userPin', pin);
-                        
+                    // Check if user wants to stay logged in
+                    const rememberMe = localStorage.getItem('aiTaskTracker_rememberMe');
+                    if (currentUser && rememberMe === 'true') {
+                        // User is remembered, load data directly
                         userDataRef = database.ref(`users/${currentUser}`);
-                        
-                        // Check if username already exists
-                        userDataRef.once('value').then(snapshot => {
-                            if (snapshot.exists()) {
-                                alert('Username already taken. Please choose another.');
-                                localStorage.removeItem('aiTaskTracker_currentUser');
-                                localStorage.removeItem('aiTaskTracker_userPin');
-                                currentUser = '';
-                                promptForUsername();
-                            } else {
-                                // Save PIN to Firebase and load data
-                                userDataRef.child('pin').set(pin).then(() => {
-                                    loadDataFromFirebase();
-                                });
-                            }
-                        });
-                        
+                        loadDataFromFirebase();
+                        return;
+                    }
+                    
+                    // Show login/signup choice
+                    const choice = confirm('Do you have an existing account?\n\nClick "OK" for existing account\nClick "Cancel" to create new account');
+                    
+                    if (choice) {
+                        // Existing user login
+                        showLoginForm();
                     } else {
-                        // Returning user - verify PIN
-                        const storedPin = localStorage.getItem('aiTaskTracker_userPin');
-                        const enteredPin = prompt(`Welcome back ${currentUser}! Enter your 4-digit PIN:`);
-                        
-                        if (enteredPin === storedPin) {
+                        // New user signup
+                        showSignupForm();
+                    }
+                }
+
+                function showLoginForm() {
+                    const username = prompt('Enter your username:');
+                    if (!username) return;
+                    
+                    const cleanUsername = username.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+                    const pin = prompt('Enter your 4-digit PIN:');
+                    
+                    if (!pin || pin.length !== 4 || !/^\d{4}$/.test(pin)) {
+                        alert('PIN must be exactly 4 digits');
+                        return;
+                    }
+                    
+                    // Verify credentials with Firebase
+                    const testRef = database.ref(`users/${cleanUsername}/pin`);
+                    testRef.once('value').then(snapshot => {
+                        const storedPin = snapshot.val();
+                        if (storedPin === pin) {
+                            // Successful login
+                            currentUser = cleanUsername;
+                            localStorage.setItem('aiTaskTracker_currentUser', currentUser);
+                            localStorage.setItem('aiTaskTracker_userPin', pin);
+                            
+                            // Ask about remembering
+                            const remember = confirm('Remember me on this device?\n\n(You won\'t need to enter credentials again)');
+                            localStorage.setItem('aiTaskTracker_rememberMe', remember.toString());
+                            
                             userDataRef = database.ref(`users/${currentUser}`);
                             loadDataFromFirebase();
                         } else {
-                            alert('Incorrect PIN');
+                            alert('Incorrect username or PIN');
+                            promptForUsername();
+                        }
+                    }).catch(() => {
+                        alert('Username not found');
+                        promptForUsername();
+                    });
+                }
+
+                function showSignupForm() {
+                    const username = prompt('Create a username (letters and numbers only):');
+                    if (!username) return;
+                    
+                    const cleanUsername = username.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+                    if (cleanUsername !== username.trim().toLowerCase()) {
+                        alert('Username can only contain letters and numbers');
+                        return;
+                    }
+                    
+                    const pin = prompt('Create a 4-digit PIN:');
+                    if (!pin || pin.length !== 4 || !/^\d{4}$/.test(pin)) {
+                        alert('PIN must be exactly 4 digits');
+                        return;
+                    }
+                    
+                    const confirmPin = prompt('Confirm your 4-digit PIN:');
+                    if (pin !== confirmPin) {
+                        alert('PINs do not match');
+                        return;
+                    }
+                    
+                    currentUser = cleanUsername;
+                    localStorage.setItem('aiTaskTracker_currentUser', currentUser);
+                    localStorage.setItem('aiTaskTracker_userPin', pin);
+                    
+                    userDataRef = database.ref(`users/${currentUser}`);
+                    
+                    // Check if username already exists
+                    userDataRef.once('value').then(snapshot => {
+                        if (snapshot.exists()) {
+                            alert('Username already taken. Please choose another.');
                             localStorage.removeItem('aiTaskTracker_currentUser');
                             localStorage.removeItem('aiTaskTracker_userPin');
                             currentUser = '';
                             promptForUsername();
+                        } else {
+                            // Ask about remembering
+                            const remember = confirm('Remember me on this device?\n\n(You won\'t need to enter credentials again)');
+                            localStorage.setItem('aiTaskTracker_rememberMe', remember.toString());
+                            
+                            // Save PIN to Firebase and load data
+                            userDataRef.child('pin').set(pin).then(() => {
+                                loadDataFromFirebase();
+                            });
                         }
+                    });
+                }
+
+                function logOut() {
+                    if (confirm('Are you sure you want to log out?')) {
+                        // Clear all stored data
+                        localStorage.removeItem('aiTaskTracker_currentUser');
+                        localStorage.removeItem('aiTaskTracker_userPin');
+                        localStorage.removeItem('aiTaskTracker_rememberMe');
+                        localStorage.removeItem('aiTaskTracker_lastUpdate');
+                        
+                        // Reset app state
+                        currentUser = '';
+                        userDataRef = null;
+                        workspaces = {};
+                        
+                        // Reload page to restart
+                        location.reload();
                     }
                 }
                 
