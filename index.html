@@ -112,6 +112,19 @@
                                                     border: 1px solid var(--border-color);
                                                 }
                                                 
+                                                .tab.dragging {
+                                                    opacity: 0.5;
+                                                    transform: rotate(2deg);
+                                                }
+
+                                                .workspace-tabs .tab {
+                                                    cursor: grab;
+                                                }
+
+                                                .workspace-tabs .tab:active {
+                                                    cursor: grabbing;
+                                                }
+                                                
                                                 .tab {
                                                     padding: 12px 16px;
                                                     border-radius: 8px;
@@ -1034,8 +1047,11 @@
                 <button class="btn btn-secondary" onclick="showSettingsModal()" title="App Settings">
                     ⚙️
                 </button>
-                <button class="btn btn-green" onclick="showSyncModal()" title="Sync Settings">
-                    🔄 Sync
+                <button class="btn btn-green" onclick="refreshFromFirebase()" title="Refresh Data from Server">
+                    🔄 Refresh
+                </button>
+                <button class="btn btn-secondary" onclick="showHelpModal()" title="Help & Documentation">
+                    ❓ Help
                 </button>
                 <button class="btn btn-secondary" onclick="logOut()" title="Log Out">
                     🚪 Logout
@@ -1120,56 +1136,6 @@
             <div style="display: flex; gap: 10px; margin-top: 24px;">
                 <button class="btn btn-green" onclick="saveDefaults()" style="flex: 1;">Save Defaults</button>
                 <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Sync Setup Modal -->
-    <div id="syncModal" class="modal">
-        <div class="modal-content">
-            <h3>🔄 Sync Your Tasks</h3>
-            <div id="syncSetupContent">
-                <div style="margin-bottom: 20px; padding: 16px; background: var(--bg-tertiary); border-radius: 8px; border: 1px solid var(--border-color);">
-                    <h4 style="margin-bottom: 12px; color: var(--text-primary);">📋 Quick Setup Guide:</h4>
-                    <ol style="margin-left: 20px; color: var(--text-secondary); line-height: 1.6;">
-                        <li><strong>Go to:</strong> <a href="https://gist.github.com" target="_blank" style="color: var(--blue);">gist.github.com</a></li>
-                        <li><strong>Create account</strong> (recommended) or stay anonymous</li>
-                        <li><strong>Filename:</strong> my-tasks.json</li>
-                        <li><strong>Content:</strong> just type <code>{}</code></li>
-                        <li><strong>Click</strong> "Create gist" button</li>
-                        <li><strong>Copy the URL</strong> and paste below</li>
-                    </ol>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">GitHub Gist URL</label>
-                    <input type="text" id="syncUrl" class="form-input" placeholder="https://gist.github.com/your-gist-url">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Email Address (Optional)</label>
-                    <input type="email" id="syncEmail" class="form-input" placeholder="your@email.com">
-                    <div style="margin-top: 8px; font-size: 12px; color: var(--text-secondary);">
-                        We'll send you your sync URL and instructions as a backup
-                    </div>
-                </div>
-                
-                <div style="display: flex; gap: 10px; margin-top: 24px;">
-                    <button class="btn btn-green" onclick="setupSync()" style="flex: 1;">🚀 Start Syncing</button>
-                    <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-                </div>
-            </div>
-            
-            <div id="syncStatusContent" style="display: none;">
-                <div style="text-align: center; padding: 20px;">
-                    <div style="font-size: 48px; margin-bottom: 16px;">✅</div>
-                    <h4 style="color: var(--text-primary); margin-bottom: 8px;">Sync Connected!</h4>
-                    <p style="color: var(--text-secondary); margin-bottom: 20px;">Your tasks are now syncing across all devices</p>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="btn btn-secondary" onclick="disconnectSync()" style="flex: 1;">Disconnect</button>
-                        <button class="btn btn-green" onclick="closeModal()" style="flex: 1;">Done</button>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -1302,7 +1268,131 @@
         </div>
     </div>
     
-    <script>
+    <!-- Help/Documentation Modal -->
+        <div id="helpModal" class="modal">
+            <div class="modal-content" style="max-width: 800px; max-height: 85vh;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid var(--border-color); padding-bottom: 16px;">
+                    <h2 style="margin: 0; color: var(--text-primary);">🤖 AI Task Tracker - Help & Documentation</h2>
+                    <button onclick="closeModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary);">&times;</button>
+                </div>
+                
+                <div style="overflow-y: auto; max-height: calc(85vh - 120px);">
+                    <div style="line-height: 1.6; color: var(--text-primary);">
+                        
+                        <div style="background: linear-gradient(135deg, var(--blue) 0%, var(--purple) 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 24px;">
+                            <h3 style="margin: 0 0 12px 0;">Get Started in 2 Minutes</h3>
+                            <p style="margin: 0; opacity: 0.9;">Smart, cross-device task management with AI-powered natural language input. Real-time syncing across all devices.</p>
+                        </div>
+
+                        <div style="margin-bottom: 32px;">
+                            <h3 style="color: var(--blue); margin-bottom: 16px;">🚀 Quick Start</h3>
+                            <div style="background: var(--bg-tertiary); padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+                                <h4 style="margin: 0 0 8px 0;">Try typing this:</h4>
+                                <code style="background: var(--bg-secondary); padding: 8px; border-radius: 4px; display: block; font-family: monospace;">Review presentation by Friday, high priority, 2 hours</code>
+                            </div>
+                            <p>The app automatically organizes this into: <strong>Task:</strong> Review presentation, <strong>Due:</strong> Friday, <strong>Priority:</strong> High, <strong>Time:</strong> 2 hours</p>
+                        </div>
+
+                        <div style="margin-bottom: 32px;">
+                            <h3 style="color: var(--green); margin-bottom: 16px;">✨ Key Features</h3>
+                            <ul style="padding-left: 20px;">
+                                <li><strong>AI-Powered Input:</strong> Type naturally or use voice input for automatic parsing</li>
+                                <li><strong>Smart Organization:</strong> Auto-categorizes by Overdue, Today, This Week, Next Week, Future</li>
+                                <li><strong>Cross-Device Sync:</strong> Real-time updates across all your devices</li>
+                                <li><strong>Custom Workspaces:</strong> Separate Work, Personal, Project spaces</li>
+                                <li><strong>Flexible Priorities:</strong> Choose P0-P3 or Low-High priority systems</li>
+                                <li><strong>Custom Categories:</strong> Create categories with colors and emojis</li>
+                            </ul>
+                        </div>
+
+                        <div style="margin-bottom: 32px;">
+                            <h3 style="color: var(--purple); margin-bottom: 16px;">💡 Natural Language Examples</h3>
+                            <div style="background: var(--bg-tertiary); padding: 16px; border-radius: 8px;">
+                                <div style="margin-bottom: 8px;"><code>"Meeting with client next Tuesday, work category, 1 hour"</code></div>
+                                <div style="margin-bottom: 8px;"><code>"Buy groceries tomorrow, personal, low priority"</code></div>
+                                <div style="margin-bottom: 8px;"><code>"Finish project proposal by 12/15, critical"</code></div>
+                                <div><code>"Call doctor tomorrow, 30 minutes"</code></div>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 32px;">
+                            <h3 style="color: var(--blue); margin-bottom: 16px;">📱 Install as App</h3>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                <div style="background: var(--bg-tertiary); padding: 16px; border-radius: 8px;">
+                                    <h4 style="margin: 0 0 8px 0;">Mobile</h4>
+                                    <ol style="margin: 0; padding-left: 20px; font-size: 14px;">
+                                        <li>Open in your browser</li>
+                                        <li>Look for "Add to Home Screen"</li>
+                                        <li>Install as native app</li>
+                                    </ol>
+                                </div>
+                                <div style="background: var(--bg-tertiary); padding: 16px; border-radius: 8px;">
+                                    <h4 style="margin: 0 0 8px 0;">Desktop</h4>
+                                    <ol style="margin: 0; padding-left: 20px; font-size: 14px;">
+                                        <li>Open in Chrome or Edge</li>
+                                        <li>Click install button in address bar</li>
+                                        <li>Adds to your applications</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 32px;">
+                            <h3 style="color: var(--red); margin-bottom: 16px;">🔒 Privacy & Security</h3>
+                            <div style="background: var(--bg-tertiary); padding: 16px; border-radius: 8px; border-left: 4px solid var(--green);">
+                                <p style="margin: 0 0 12px 0;"><strong>Your data is secure and private:</strong></p>
+                                <ul style="margin: 0; padding-left: 20px;">
+                                    <li>Only accessible with your login credentials</li>
+                                    <li>Complete user isolation - no one else can see your data</li>
+                                    <li>No tracking or data sharing</li>
+                                    <li>Works offline, syncs when connected</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 32px;">
+                            <h3 style="color: var(--gray); margin-bottom: 16px;">🛠 Troubleshooting</h3>
+                            <details style="background: var(--bg-tertiary); padding: 16px; border-radius: 8px; margin-bottom: 12px;">
+                                <summary style="cursor: pointer; font-weight: 600;">Can't access tasks?</summary>
+                                <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color);">
+                                    • Verify login credentials are correct<br>
+                                    • Check internet connection<br>
+                                    • Try refreshing the page<br>
+                                    • Click the 🔄 Refresh button
+                                </div>
+                            </details>
+                            <details style="background: var(--bg-tertiary); padding: 16px; border-radius: 8px; margin-bottom: 12px;">
+                                <summary style="cursor: pointer; font-weight: 600;">App won't load?</summary>
+                                <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color);">
+                                    • Clear browser cache and cookies<br>
+                                    • Try incognito/private browsing mode<br>
+                                    • Use a modern browser (Chrome, Safari, Firefox, Edge)<br>
+                                    • Disable browser extensions temporarily
+                                </div>
+                            </details>
+                            <details style="background: var(--bg-tertiary); padding: 16px; border-radius: 8px;">
+                                <summary style="cursor: pointer; font-weight: 600;">Sync issues between devices?</summary>
+                                <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color);">
+                                    • Ensure internet connection on both devices<br>
+                                    • Verify same login credentials on all devices<br>
+                                    • Try logging out and back in<br>
+                                    • Use the 🔄 Refresh button to force sync
+                                </div>
+                            </details>
+                        </div>
+
+                        <div style="text-align: center; padding: 20px; background: var(--bg-tertiary); border-radius: 8px;">
+                            <p style="margin: 0; color: var(--text-secondary); font-size: 14px;">
+                                <strong>Technical:</strong> HTML/CSS/JavaScript • Firebase Backend • ~60KB total • Offline-first architecture
+                            </p>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <script>
 
         // Firebase Configuration
                 const firebaseConfig = {
@@ -1369,6 +1459,10 @@
                         });
                 }
 
+                function showHelpModal() {
+                    showModal('helpModal');
+                }
+            
                 function showSignUpForm() {
                     const email = prompt('Enter your email:');
                     if (!email) return;
@@ -1421,6 +1515,7 @@
                         firebase.auth().signOut().then(() => {
                             // Clear local data
                             currentUser = '';
+                            disconnectRealtimeListener();
                             userDataRef = null;
                             workspaces = {};
                             location.reload();
@@ -1436,6 +1531,7 @@
                 let appName = '🤖 AI Task Tracker';
                 let currentUser = localStorage.getItem('aiTaskTracker_currentUser') || '';
                 let userDataRef = null;
+                let workspaceOrder = ['Work', 'Personal'];
 
         // Initialize default workspace if none exist
         if (Object.keys(workspaces).length === 0) {
@@ -1481,27 +1577,6 @@
         // Initialize app
         document.addEventListener('DOMContentLoaded', function() {
             setupEventListeners();
-            
-            // Clean up existing workspaces - remove ALL old Task Categorys
-            Object.keys(workspaces).forEach(name => {
-                const workspace = workspaces[name];
-                // Reset ALL workspaces to clean state
-                if (workspace.taskCategories && workspace.taskCategories.length > 0) {
-                    // Check if it has any old defaults and reset to clean
-                    const oldDefaults = ['Delivery', 'Personal', 'Product', 'Home', 'Health', 'Finance', 'Learning'];
-                    const hasOldDefaults = workspace.taskCategories.some(type => oldDefaults.includes(type));
-                    if (hasOldDefaults) {
-                        workspace.taskCategories = [];
-                    }
-                }
-                // Add emoji if missing
-                if (!workspace.emoji) {
-                    if (name === 'Work') workspace.emoji = '💼';
-                    else if (name === 'Personal') workspace.emoji = '🏠';
-                    else workspace.emoji = '📁';
-                }
-            });
-            saveWorkspaces();
             
             renderWorkspaceTabs();
             switchToWorkspace(currentWorkspace);
@@ -1564,14 +1639,26 @@
         // Workspace Management
         function renderWorkspaceTabs() {
             const container = document.getElementById('workspaceTabs');
-            const workspaceNames = Object.keys(workspaces);
+            
+            // Use saved order, fallback to Object.keys if no order saved
+            const orderedWorkspaces = workspaceOrder.filter(name => workspaces[name]);
+            
+            // Add any new workspaces not in the saved order
+            Object.keys(workspaces).forEach(name => {
+                if (!orderedWorkspaces.includes(name)) {
+                    orderedWorkspaces.push(name);
+                }
+            });
             
             let html = '';
-            workspaceNames.forEach(name => {
+            orderedWorkspaces.forEach((name, index) => {
                 const workspace = workspaces[name];
                 const isActive = name === currentWorkspace;
                 html += `
-                    <div class="tab ${isActive ? 'active' : ''}" onclick="switchToWorkspace('${name}')">
+                    <div class="tab ${isActive ? 'active' : ''}" 
+                         data-workspace="${name}"
+                         data-index="${index}"
+                         onclick="switchToWorkspace('${name}')">
                         <span>${workspace.emoji || '📁'}</span>
                         <span>${name}</span>
                     </div>
@@ -1615,11 +1702,41 @@
             showModal('workspaceManagerModal');
         }
 
+        function moveWorkspace(workspaceName, direction) {
+            const currentIndex = workspaceOrder.indexOf(workspaceName);
+            if (currentIndex === -1) return;
+            
+            const newOrder = [...workspaceOrder];
+            
+            if (direction === 'up' && currentIndex > 0) {
+                // Move up: swap with previous item
+                [newOrder[currentIndex], newOrder[currentIndex - 1]] = [newOrder[currentIndex - 1], newOrder[currentIndex]];
+                workspaceOrder = newOrder;
+                saveWorkspaces();
+                renderWorkspaceManager();
+                renderWorkspaceTabs();
+            } else if (direction === 'down' && currentIndex < newOrder.length - 1) {
+                // Move down: swap with next item
+                [newOrder[currentIndex], newOrder[currentIndex + 1]] = [newOrder[currentIndex + 1], newOrder[currentIndex]];
+                workspaceOrder = newOrder;
+                saveWorkspaces();
+                renderWorkspaceManager();
+                renderWorkspaceTabs();
+            }
+        }
+        
         function renderWorkspaceManager() {
             const container = document.getElementById('workspaceManagerList');
-            const workspaceNames = Object.keys(workspaces);
             
-            const html = workspaceNames.map(name => {
+            // Use the saved order for display
+            const orderedWorkspaces = workspaceOrder.filter(name => workspaces[name]);
+            Object.keys(workspaces).forEach(name => {
+                if (!orderedWorkspaces.includes(name)) {
+                    orderedWorkspaces.push(name);
+                }
+            });
+            
+            const html = orderedWorkspaces.map((name, index) => {
                 const workspace = workspaces[name];
                 return `
                     <div class="workspace-item">
@@ -1629,10 +1746,20 @@
                             <span class="workspace-stats">(${workspace.tasks.length} tasks)</span>
                         </div>
                         <div class="workspace-actions">
+                            ${index > 0 ? `
+                                <button class="action-btn" onclick="moveWorkspace('${name}', 'up')" title="Move Up" style="background: #eff6ff; color: #2563eb;">
+                                    ⬆️
+                                </button>
+                            ` : ''}
+                            ${index < orderedWorkspaces.length - 1 ? `
+                                <button class="action-btn" onclick="moveWorkspace('${name}', 'down')" title="Move Down" style="background: #eff6ff; color: #2563eb;">
+                                    ⬇️
+                                </button>
+                            ` : ''}
                             <button class="action-btn edit-btn" onclick="editWorkspace('${name}')" title="Edit">
                                 ✏️
                             </button>
-                            ${workspaceNames.length > 1 ? `
+                            ${orderedWorkspaces.length > 1 ? `
                                 <button class="action-btn delete-btn" onclick="deleteWorkspace('${name}')" title="Delete">
                                     🗑️
                                 </button>
@@ -1976,8 +2103,6 @@
 
         function getCurrentTaskCategories() {
             const workspace = getCurrentWorkspace();
-            console.log('getCurrentTaskCategories - workspace:', workspace);
-            console.log('getCurrentTaskCategories - taskCategories:', workspace.taskCategories);
             return workspace.taskCategories || [];
         }
 
@@ -2143,32 +2268,37 @@
         function highlightMissingFields(missingFields) {
             // Remove any existing highlights
             document.querySelectorAll('.missing-field').forEach(el => el.classList.remove('missing-field'));
+            document.querySelectorAll('.field-note').forEach(el => el.remove());
             
-            // Add missing field indicators only for fields that are actually using defaults
+            // Only highlight fields that actually got filled with defaults during parsing
             missingFields.forEach(field => {
                 let element;
-                let isActualDefault = false;
+                let shouldHighlight = false;
                 
                 if (field === 'due date') {
                     element = document.getElementById('taskDate').parentNode;
-                    isActualDefault = document.getElementById('taskDate').value === getTodayDateString();
+                    // Only highlight if it's actually today's date (the default)
+                    shouldHighlight = document.getElementById('taskDate').value === getTodayDateString();
                 } else if (field === 'time estimate') {
                     element = document.getElementById('taskTime').parentNode;
-                    isActualDefault = document.getElementById('taskTime').value === '60';
+                    // Only highlight if it's exactly 60 minutes (the default)
+                    shouldHighlight = document.getElementById('taskTime').value === '60';
                 } else if (field === 'category') {
                     element = document.getElementById('taskCategory').parentNode;
-                    isActualDefault = document.getElementById('taskCategory').value === 'General';
+                    // Only highlight if it's General (the default)
+                    shouldHighlight = document.getElementById('taskCategory').value === 'General';
                 }
                 
-                // Only highlight if it's actually using a default value
-                if (element && isActualDefault) {
-                    element.classList.add('missing-field');
-                    if (!element.querySelector('.field-note')) {
-                        const note = document.createElement('div');
-                        note.className = 'field-note';
-                        note.textContent = `(using default - you can change this)`;
-                        element.appendChild(note);
-                    }
+                // Only add styling if it's actually using a default value
+                if (element && shouldHighlight) {
+                    // Just add red text, no background box
+                    const note = document.createElement('div');
+                    note.className = 'field-note';
+                    note.style.color = '#dc2626';
+                    note.style.fontSize = '11px';
+                    note.style.marginTop = '4px';
+                    note.textContent = '(using default - you can change this)';
+                    element.appendChild(note);
                 }
             });
         }
@@ -2610,15 +2740,15 @@
         function renderTaskCard(task, isArchived = false) {
             const enabledFields = getCurrentEnabledFields();
             
-            // Build metadata items as plain text (no spans yet)
+            // Build metadata items as HTML spans with proper styling
             let metaItems = [];
             
             if (enabledFields.dueDate) {
-                metaItems.push(`📅 ${task.dueDate}`);
+                metaItems.push(`<span>📅 ${task.dueDate}</span>`);
             }
             
             if (enabledFields.priorityLowHigh || enabledFields.priorityP0P3) {
-                metaItems.push(`${task.priority}`);
+                metaItems.push(`<span>${task.priority}</span>`);
             }
             
             if (enabledFields.categories && task.taskCategory && task.taskCategory !== 'General') {
@@ -2631,17 +2761,20 @@
                 if (categoryObj) {
                     const categoryName = typeof categoryObj === 'string' ? categoryObj : categoryObj.name;
                     const categoryEmoji = typeof categoryObj === 'string' ? '' : (categoryObj.emoji || '');
+                    const categoryColor = typeof categoryObj === 'string' ? 'blue' : (categoryObj.color || 'blue');
+                    
                     const displayText = categoryEmoji ? `${categoryEmoji} ${categoryName}` : categoryName;
-                    metaItems.push(displayText);
+                    // Apply the proper CSS class for coloring
+                    metaItems.push(`<span class="meta-item category-${categoryColor}">${displayText}</span>`);
                 }
             }
             
             if (enabledFields.timeEstimate) {
-                metaItems.push(`⏱️ ${task.timeEstimate}m`);
+                metaItems.push(`<span>⏱️ ${task.timeEstimate}m</span>`);
             }
             
             if (isArchived) {
-                metaItems.push(`✅ ${task.completedAt}`);
+                metaItems.push(`<span>✅ ${task.completedAt}</span>`);
             }
             
             // Join meta items with bullet separator
@@ -2702,52 +2835,177 @@
             container.innerHTML = html;
         }
 
+        let editingCategoryIndex = null;
+
+                function editCategory(index) {
+                    const taskCategories = getCurrentTaskCategories();
+                    const category = taskCategories[index];
+                    
+                    // Handle both old string format and new object format
+                    const categoryName = typeof category === 'string' ? category : category.name;
+                    const categoryEmoji = typeof category === 'string' ? '📁' : (category.emoji || '📁');
+                    const categoryColor = typeof category === 'string' ? 'blue' : (category.color || 'blue');
+                    
+                    // Pre-fill the form with existing data
+                    document.getElementById('newTypeName').value = categoryName;
+                    document.getElementById('newTypeEmoji').value = categoryEmoji;
+                    document.getElementById('newTypeColor').value = categoryColor;
+                    
+                    // Change the button text and track editing mode
+                    const addButton = document.querySelector('button[onclick="addtaskCategory()"]');
+                    addButton.textContent = 'Update';
+                    addButton.setAttribute('onclick', `updateCategory(${index})`);
+                    
+                    editingCategoryIndex = index;
+                }
+
+                function updateCategory(index) {
+                    const name = document.getElementById('newTypeName').value.trim();
+                    const emoji = document.getElementById('newTypeEmoji').value.trim() || '📁';
+                    if (emoji && emoji.length > 2) {
+                        alert('Emoji should be 1-2 characters only');
+                        return;
+                    }
+                    const color = document.getElementById('newTypeColor').value;
+                    
+                    if (!name) {
+                        alert('Category name is required');
+                        return;
+                    }
+                    
+                    const taskCategories = getCurrentTaskCategories();
+                    const oldCategory = taskCategories[index];
+                    const oldName = typeof oldCategory === 'string' ? oldCategory : oldCategory.name;
+                    
+                    // Check if new name conflicts with existing categories (excluding current one)
+                    const nameExists = taskCategories.some((cat, i) => {
+                        if (i === index) return false; // Skip current category
+                        const catName = typeof cat === 'string' ? cat : cat.name;
+                        return catName === name;
+                    });
+                    
+                    if (nameExists) {
+                        alert('A category with this name already exists');
+                        return;
+                    }
+                    
+                    // Update the category
+                    const updatedCategory = {
+                        name: name,
+                        emoji: emoji,
+                        color: color
+                    };
+                    taskCategories[index] = updatedCategory;
+                    
+                    // If name changed, update all tasks that use this category
+                    if (oldName !== name) {
+                        const workspace = getCurrentWorkspace();
+                        workspace.tasks = workspace.tasks.map(task =>
+                            task.taskCategory === oldName ? {...task, taskCategory: name} : task
+                        );
+                        workspace.completedTasks = workspace.completedTasks.map(task =>
+                            task.taskCategory === oldName ? {...task, taskCategory: name} : task
+                        );
+                    }
+                    
+                    saveWorkspaces();
+                    renderTypeManager();
+                    updateTaskCategorySelects();
+                    renderTasks(); // Refresh task display to show updated categories
+                    
+                    // Reset the form and button
+                    resetCategoryForm();
+                }
+
+                function resetCategoryForm() {
+                    document.getElementById('newTypeName').value = '';
+                    document.getElementById('newTypeEmoji').value = '';
+                    document.getElementById('newTypeColor').value = 'blue';
+                    
+                    const addButton = document.querySelector('button[onclick^="updateCategory"], button[onclick="addtaskCategory()"]');
+                    addButton.textContent = 'Add';
+                    addButton.setAttribute('onclick', 'addtaskCategory()');
+                    
+                    editingCategoryIndex = null;
+                }
+        
         // Task Category Management
         function addtaskCategory() {
             const name = document.getElementById('newTypeName').value.trim();
             const emoji = document.getElementById('newTypeEmoji').value.trim() || '📁';
+            if (emoji && emoji.length > 2) {
+                alert('Emoji should be 1-2 characters only');
+                return;
+            }
             const color = document.getElementById('newTypeColor').value;
             
+            if (!name) {
+                alert('Category name is required');
+                return;
+            }
+            
             const taskCategories = getCurrentTaskCategories();
-            if (name && !taskCategories.some(cat => {
+            
+            // Check for duplicate names
+            const nameExists = taskCategories.some(cat => {
                 const catName = typeof cat === 'string' ? cat : cat.name;
                 return catName === name;
-            })) {
-                const newCategory = {
-                    name: name,
-                    emoji: emoji,
-                    color: color
-                };
-                taskCategories.push(newCategory);
-                saveWorkspaces();
-                renderTypeManager();
-                updateTaskCategorySelects();
-                
-                // Clear inputs
-                document.getElementById('newTypeName').value = '';
-                document.getElementById('newTypeEmoji').value = '';
-                document.getElementById('newTypeColor').value = 'blue';
+            });
+            
+            if (nameExists) {
+                alert('A category with this name already exists');
+                return;
             }
-        }
-
-        function removetaskCategory(typeName) {
-            const workspace = getCurrentWorkspace();
-            if (workspace.taskCategories.length <= 1) return;
             
-            workspace.taskCategories = workspace.taskCategories.filter(type => type !== typeName);
+            const newCategory = {
+                name: name,
+                emoji: emoji,
+                color: color
+            };
             
-            // Update existing tasks to use 'General' if their type was removed
-            workspace.tasks = workspace.tasks.map(task =>
-                task.taskCategory === typeName ? {...task, taskCategory: 'General'} : task
-            );
-            workspace.completedTasks = workspace.completedTasks.map(task =>
-                task.taskCategory === typeName ? {...task, taskCategory: 'General'} : task
-            );
-            
+            taskCategories.push(newCategory);
             saveWorkspaces();
             renderTypeManager();
             updateTaskCategorySelects();
-            renderTasks();
+            
+            // Clear inputs
+            resetCategoryForm();
+        }
+
+        function removeTaskCategory(categoryName) {
+            const workspace = getCurrentWorkspace();
+            const taskCategories = workspace.taskCategories;
+            
+            // Count tasks using this category
+            const tasksUsingCategory = workspace.tasks.filter(task => task.taskCategory === categoryName).length;
+            const completedTasksUsingCategory = workspace.completedTasks.filter(task => task.taskCategory === categoryName).length;
+            const totalTasks = tasksUsingCategory + completedTasksUsingCategory;
+            
+            let confirmMessage = `Delete the "${categoryName}" category?`;
+            if (totalTasks > 0) {
+                confirmMessage += `\n\nThis will affect ${totalTasks} task(s). They will be changed to "General" category.`;
+            }
+            
+            if (confirm(confirmMessage)) {
+                // Remove the category
+                workspace.taskCategories = taskCategories.filter(cat => {
+                    const catName = typeof cat === 'string' ? cat : cat.name;
+                    return catName !== categoryName;
+                });
+                
+                // Update existing tasks to use 'General' if their category was removed
+                workspace.tasks = workspace.tasks.map(task =>
+                    task.taskCategory === categoryName ? {...task, taskCategory: 'General'} : task
+                );
+                workspace.completedTasks = workspace.completedTasks.map(task =>
+                    task.taskCategory === categoryName ? {...task, taskCategory: 'General'} : task
+                );
+                
+                saveWorkspaces();
+                renderTypeManager();
+                updateTaskCategorySelects();
+                renderTasks(); // Refresh to show updated task categories
+            }
         }
 
         function renderTypeManager() {
@@ -2759,7 +3017,7 @@
                 return;
             }
             
-            const html = taskCategories.map(category => {
+            const html = taskCategories.map((category, index) => {
                 // Handle both old string format and new object format
                 const categoryName = typeof category === 'string' ? category : category.name;
                 const categoryEmoji = typeof category === 'string' ? '📁' : (category.emoji || '📁');
@@ -2768,9 +3026,14 @@
                 return `
                     <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: var(--bg-tertiary); border-radius: 6px; margin-bottom: 8px; border: 1px solid var(--border-color);">
                         <span class="meta-item category-${categoryColor}">${categoryEmoji} ${categoryName}</span>
-                        <button class="action-btn delete-btn" onclick="removetaskCategory('${categoryName}')" title="Remove">
-                            🗑️
-                        </button>
+                        <div style="display: flex; gap: 4px;">
+                            <button class="action-btn edit-btn" onclick="editCategory(${index})" title="Edit" style="width: 28px; height: 28px; font-size: 14px;">
+                                ✏️
+                            </button>
+                            <button class="action-btn delete-btn" onclick="removeTaskCategory('${categoryName}')" title="Remove" style="width: 28px; height: 28px; font-size: 14px;">
+                                🗑️
+                            </button>
+                        </div>
                     </div>
                 `;
             }).join('');
@@ -2906,6 +3169,7 @@
         }
 
         function closeCategoryManager() {
+            resetCategoryForm();
             closeModal();
         }
 
@@ -2969,134 +3233,6 @@
                 if (manifestLink) {
                     manifestLink.href = manifestURL;
                 }
-            }
-        }
-
-        // Sync Functions
-        function showSyncModal() {
-            if (syncUrl) {
-                document.getElementById('syncSetupContent').style.display = 'none';
-                document.getElementById('syncStatusContent').style.display = 'block';
-            } else {
-                document.getElementById('syncSetupContent').style.display = 'block';
-                document.getElementById('syncStatusContent').style.display = 'none';
-            }
-            showModal('syncModal');
-        }
-
-        async function setupSync() {
-            const url = document.getElementById('syncUrl').value.trim();
-            const email = document.getElementById('syncEmail').value.trim();
-            
-            if (!url) return;
-            
-            // Validate GitHub Gist URL
-            if (!url.includes('gist.github.com')) {
-                alert('Please enter a valid GitHub Gist URL');
-                return;
-            }
-            
-            try {
-                // Convert to raw URL for API access
-                const rawUrl = url.replace('gist.github.com/', 'gist.githubusercontent.com/').replace('/gist/', '/') + '/raw/my-tasks.json';
-                
-                // Test connection
-                const response = await fetch(rawUrl);
-                if (!response.ok && response.status !== 404) {
-                    throw new Error('Cannot connect to sync URL');
-                }
-                
-                syncUrl = rawUrl;
-                localStorage.setItem('aiTaskTracker_syncUrl', syncUrl);
-                
-                // Send email if provided
-                if (email) {
-                    await sendSyncEmail(email, url);
-                }
-                
-                // Start syncing
-                initializeSync();
-                
-                // Show success
-                document.getElementById('syncSetupContent').style.display = 'none';
-                document.getElementById('syncStatusContent').style.display = 'block';
-                
-            } catch (error) {
-                alert('Failed to setup sync. Please check your URL and try again.');
-                console.error('Sync setup error:', error);
-            }
-        }
-
-        async function sendSyncEmail(email, gistUrl) {
-            try {
-                // Simple email service (using a free service like Formspree or similar)
-                const emailContent = {
-                    to: email,
-                    subject: `Your ${appName.replace('🤖 ', '')} Sync URL`,
-                    body: `Hi there!
-
-Here's your sync URL for ${appName.replace('🤖 ', '')}:
-${gistUrl}
-
-📱 How to use this URL:
-1. Open your task tracker app on any device
-2. Click the "🔄 Sync" button
-3. Paste this URL
-4. Click "Start Syncing"
-
-That's it! Your tasks will now sync across all your devices.
-
-Keep this email safe - you'll need this URL to sync new devices!
-
-Happy task tracking! ✅`
-                };
-                
-                // Note: In a real implementation, you'd use a proper email service
-                console.log('Email would be sent:', emailContent);
-                
-            } catch (error) {
-                console.error('Email sending failed:', error);
-                // Don't block sync setup if email fails
-            }
-        }
-
-        function disconnectSync() {
-            syncUrl = '';
-            localStorage.removeItem('aiTaskTracker_syncUrl');
-            if (syncInterval) {
-                clearInterval(syncInterval);
-                syncInterval = null;
-            }
-            closeModal();
-        }
-
-        function initializeSync() {
-            if (syncUrl) {
-                // Sync every 30 seconds
-                syncInterval = setInterval(syncData, 30000);
-                // Initial sync
-                syncData();
-            }
-        }
-
-        async function syncData() {
-            if (!syncUrl) return;
-            
-            try {
-                // Upload current data
-                const data = {
-                    workspaces,
-                    currentWorkspace,
-                    appName,
-                    lastSync: new Date().toISOString()
-                };
-                
-                // Note: This is a simplified version. In reality, you'd need to use GitHub's API
-                // to update the gist content. For now, this shows the structure.
-                console.log('Syncing data:', data);
-                
-            } catch (error) {
-                console.error('Sync failed:', error);
             }
         }
 
@@ -3241,18 +3377,25 @@ Happy task tracking! ✅`
             return formatDate(targetDate);
         }
         
+        function disconnectRealtimeListener() {
+                    if (userDataRef) {
+                        userDataRef.off();
+                    }
+                }
+        
         // Data Persistence
         function saveWorkspaces() {
-            console.log('saveWorkspaces called - saving:', workspaces);
             
             // Save to localStorage as backup
             localStorage.setItem('aiTaskTracker_workspaces', JSON.stringify(workspaces));
+            localStorage.setItem('aiTaskTracker_workspaceOrder', JSON.stringify(workspaceOrder));
             
             // Save to Firebase if user is authenticated
             if (userDataRef && currentUser) {
                 const data = {
                     workspaces,
                     currentWorkspace,
+                    workspaceOrder,
                     appName,
                     lastUpdated: Date.now()
                 };
@@ -3260,10 +3403,61 @@ Happy task tracking! ✅`
                     console.error('Firebase save error:', error);
                 });
             }
-            
-            console.log('saveWorkspaces completed');
         }
 
+        function refreshFromFirebase() {
+                    if (!userDataRef || !currentUser) {
+                        alert('Not connected to sync service. Please log in again.');
+                        return;
+                    }
+                    
+                    // Show visual feedback that refresh is happening
+                    const refreshBtn = document.querySelector('button[onclick="refreshFromFirebase()"]');
+                    const originalText = refreshBtn.textContent;
+                    refreshBtn.textContent = '⏳ Refreshing...';
+                    refreshBtn.disabled = true;
+                    
+                    userDataRef.once('value').then(snapshot => {
+                        const data = snapshot.val();
+                        if (data && data.workspaces) {
+                            // Load fresh data from Firebase
+                            workspaces = data.workspaces;
+                            currentWorkspace = data.currentWorkspace || currentWorkspace;
+                            appName = data.appName || appName;
+                            workspaceOrder = data.workspaceOrder || Object.keys(workspaces);
+                            
+                            // Update the UI with fresh data
+                            renderWorkspaceTabs();
+                            switchToWorkspace(currentWorkspace);
+                            updateAppName();
+                            updateArchiveCount();
+                            
+                            // Show success feedback
+                            refreshBtn.textContent = '✅ Refreshed!';
+                            setTimeout(() => {
+                                refreshBtn.textContent = originalText;
+                                refreshBtn.disabled = false;
+                            }, 2000);
+                            
+                        } else {
+                            // No data found
+                            refreshBtn.textContent = '⚠️ No Data Found';
+                            alert('No data found on server. Your local data is preserved.');
+                            setTimeout(() => {
+                                refreshBtn.textContent = originalText;
+                                refreshBtn.disabled = false;
+                            }, 2000);
+                        }
+                    }).catch(error => {
+                        console.error('Firebase refresh error:', error);
+                        alert('Failed to refresh data from server. Please check your connection.');
+                        
+                        // Reset button on error
+                        refreshBtn.textContent = originalText;
+                        refreshBtn.disabled = false;
+                    });
+                }
+        
         function loadDataFromFirebase() {
             if (!userDataRef) return;
             
@@ -3274,13 +3468,12 @@ Happy task tracking! ✅`
                     workspaces = data.workspaces;
                     currentWorkspace = data.currentWorkspace || 'Work';
                     appName = data.appName || 'AI Task Tracker';
+                    workspaceOrder = data.workspaceOrder || Object.keys(workspaces);
                     
                     // Update UI
                     renderWorkspaceTabs();
                     switchToWorkspace(currentWorkspace);
                     updateAppName();
-                    
-                    console.log('Data loaded from Firebase');
                     
                     // Set up real-time listener
                     setupRealtimeListener();
@@ -3289,6 +3482,10 @@ Happy task tracking! ✅`
                     const localData = localStorage.getItem('aiTaskTracker_workspaces');
                     if (localData) {
                         workspaces = JSON.parse(localData);
+                    }
+                    const localOrder = localStorage.getItem('aiTaskTracker_workspaceOrder');
+                    if (localOrder) {
+                        workspaceOrder = JSON.parse(localOrder);
                     }
                     // Save current data to Firebase
                     saveWorkspaces();
@@ -3321,7 +3518,6 @@ Happy task tracking! ✅`
                         updateArchiveCount();
                         
                         localStorage.setItem('aiTaskTracker_lastUpdate', data.lastUpdated.toString());
-                        console.log('Real-time update received');
                     }
                 }
             });
