@@ -2236,16 +2236,30 @@
         }
 
         function getCurrentTasks() {
-            return getCurrentWorkspace().tasks;
+            const workspace = getCurrentWorkspace();
+            if (!workspace.tasks) {
+                workspace.tasks = []; // Initialize if missing
+                saveWorkspaces(); // Save the fix
+            }
+            return workspace.tasks;
         }
 
-        function getCurrentCompletedTasks() {
-            return getCurrentWorkspace().completedTasks;
-        }
+            function getCurrentCompletedTasks() {
+                const workspace = getCurrentWorkspace();
+                if (!workspace.completedTasks) {
+                    workspace.completedTasks = []; // Initialize if missing
+                    saveWorkspaces(); // Save the fix
+                }
+                return workspace.completedTasks;
+            }
 
         function getCurrentTaskCategories() {
             const workspace = getCurrentWorkspace();
-            return workspace.taskCategories || [];
+            if (!workspace.taskCategories) {
+                workspace.taskCategories = []; // Initialize if missing
+                saveWorkspaces(); // Save the fix
+            }
+            return workspace.taskCategories;
         }
 
         function getPriorityLowHighOptions() {
