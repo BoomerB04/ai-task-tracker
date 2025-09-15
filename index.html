@@ -2232,7 +2232,45 @@
         
         // Get current workspace data
         function getCurrentWorkspace() {
-            return workspaces[currentWorkspace];
+            // Safety check: ensure workspaces exists
+            if (!workspaces || typeof workspaces !== 'object') {
+                console.log('Workspaces not initialized, creating default...');
+                workspaces = {
+                    'Work': {
+                        emoji: '💼',
+                        tasks: [],
+                        completedTasks: [],
+                        taskCategories: []
+                    }
+                };
+                currentWorkspace = 'Work';
+            }
+            
+            // Safety check: ensure currentWorkspace exists in workspaces
+            if (!workspaces[currentWorkspace]) {
+                console.log(`Current workspace '${currentWorkspace}' not found, switching to first available...`);
+                const availableWorkspaces = Object.keys(workspaces);
+                if (availableWorkspaces.length > 0) {
+                    currentWorkspace = availableWorkspaces[0];
+                } else {
+                    // Create default workspace if none exist
+                    workspaces['Work'] = {
+                        emoji: '💼',
+                        tasks: [],
+                        completedTasks: [],
+                        taskCategories: []
+                    };
+                    currentWorkspace = 'Work';
+                }
+            }
+            
+            // Ensure the workspace has required properties
+            const workspace = workspaces[currentWorkspace];
+            if (!workspace.tasks) workspace.tasks = [];
+            if (!workspace.completedTasks) workspace.completedTasks = [];
+            if (!workspace.taskCategories) workspace.taskCategories = [];
+            
+            return workspace;
         }
 
         function getCurrentTasks() {
