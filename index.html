@@ -1411,17 +1411,16 @@
 
                 // Firebase Auth implementation
                 function promptForUsername() {
+                    // Check if user is already signed in
                     firebase.auth().onAuthStateChanged(function(user) {
                         if (user) {
                             // User is signed in
                             currentUser = user.uid;
                             userDataRef = database.ref(`users/${currentUser}`);
-                            showLoggedInState();
                             loadDataFromFirebase();
                         } else {
-                            // User is signed out
-                            showLoggedOutState();
-                            loadLocalDataOnly(); // Don't clear existing data
+                            // User is signed out, show login choice
+                            showAuthChoice();
                         }
                     });
                 }
@@ -3445,17 +3444,14 @@
         }
 
             function refreshFromFirebase() {
-                if (!firebase.auth().currentUser) {
-                    alert('Please log in first to refresh data from server.');
+                const refreshBtn = document.querySelector('button[onclick="refreshFromFirebase()"]');
+                const originalText = refreshBtn.textContent;
+                
+                if (!currentUser || !userDataRef) {
+                    alert('Please log in to refresh data from server.');
                     return;
                 }
                 
-                if (!userDataRef) {
-                    userDataRef = database.ref(`users/${firebase.auth().currentUser.uid}`);
-                }
-                
-                const refreshBtn = document.querySelector('button[onclick="refreshFromFirebase()"]');
-                const originalText = refreshBtn.textContent;
                 refreshBtn.textContent = '⏳ Refreshing...';
                 refreshBtn.disabled = true;
                 
@@ -3464,31 +3460,28 @@
                     if (data && data.workspaces) {
                         workspaces = data.workspaces;
                         currentWorkspace = data.currentWorkspace || currentWorkspace;
-                        appName = data.appName || appName;
                         workspaceOrder = data.workspaceOrder || Object.keys(workspaces);
                         
                         renderWorkspaceTabs();
                         switchToWorkspace(currentWorkspace);
-                        updateAppName();
                         updateArchiveCount();
                         
                         refreshBtn.textContent = '✅ Refreshed!';
-                        setTimeout(() => {
-                            refreshBtn.textContent = originalText;
-                            refreshBtn.disabled = false;
-                        }, 2000);
                     } else {
-                        refreshBtn.textContent = '⚠️ No Data Found';
-                        alert('No data found on server. Your local data is preserved.');
-                        setTimeout(() => {
-                            refreshBtn.textContent = originalText;
-                            refreshBtn.disabled = false;
-                        }, 2000);
+                        refreshBtn.textContent = '⚠️ No Data';
+                        alert('No data found on server.');
                     }
+                    
+                    setTimeout(() => {
+                        refreshBtn.textContent = originalText;
+                        refreshBtn.disabled = false;
+                    }, 2000);
+                    
                 }).catch(error => {
-                    console.error('Firebase refresh error:', error);
+                    console.error('Refresh failed:', error);
                     refreshBtn.textContent = '❌ Failed';
-                    alert('Connection failed. Please check your internet connection.');
+                    alert('Failed to refresh data from server. Please check your connection.');
+                    
                     setTimeout(() => {
                         refreshBtn.textContent = originalText;
                         refreshBtn.disabled = false;
