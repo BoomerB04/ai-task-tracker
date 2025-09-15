@@ -1411,20 +1411,58 @@
 
                 // Firebase Auth implementation
                 function promptForUsername() {
-                    // Check if user is already signed in
                     firebase.auth().onAuthStateChanged(function(user) {
                         if (user) {
                             // User is signed in
                             currentUser = user.uid;
                             userDataRef = database.ref(`users/${currentUser}`);
+                            showLoggedInState();
                             loadDataFromFirebase();
                         } else {
-                            // User is signed out, show login choice
-                            showAuthChoice();
+                            // User is signed out
+                            showLoggedOutState();
+                            loadLocalDataOnly(); // Don't clear existing data
                         }
                     });
                 }
 
+                function showLoggedInState() {
+                    // Show logout button, hide login button
+                    document.querySelector('[onclick="logOut()"]').style.display = 'flex';
+                    const loginBtn = document.getElementById('loginBtn');
+                    if (loginBtn) loginBtn.style.display = 'none';
+                }
+
+                function showLoggedOutState() {
+                    // Show login button, hide logout button
+                    document.querySelector('[onclick="logOut()"]').style.display = 'none';
+                    if (!document.getElementById('loginBtn')) {
+                        const loginBtn = document.createElement('button');
+                        loginBtn.id = 'loginBtn';
+                        loginBtn.className = 'btn btn-green';
+                        loginBtn.innerHTML = '🔐 Log In / Sign Up';
+                        loginBtn.onclick = showAuthChoice;
+                        document.querySelector('.app-controls').insertBefore(loginBtn, document.querySelector('[onclick="logOut()"]'));
+                    }
+                    document.getElementById('loginBtn').style.display = 'flex';
+                }
+
+                function loadLocalDataOnly() {
+                    // Load from localStorage without clearing existing data
+                    const localData = localStorage.getItem('aiTaskTracker_workspaces');
+                    const localOrder = localStorage.getItem('aiTaskTracker_workspaceOrder');
+                    
+                    if (localData && Object.keys(workspaces).length === 0) {
+                        workspaces = JSON.parse(localData);
+                    }
+                    if (localOrder && workspaceOrder.length <= 2) {
+                        workspaceOrder = JSON.parse(localOrder);
+                    }
+                    
+                    renderWorkspaceTabs();
+                    renderTasks();
+                    updateArchiveCount();
+                }
                 function showAuthChoice() {
                     const choice = confirm('Do you have an account?\n\nClick "OK" to sign in\nClick "Cancel" to create account');
                     
@@ -1676,17 +1714,18 @@
             container.innerHTML = html;
         }
 
-        function switchToWorkspace(workspaceName) {
-            currentWorkspace = workspaceName;
-            localStorage.setItem('aiTaskTracker_currentWorkspace', currentWorkspace);
-            
-            showingArchive = false;
-            document.getElementById('workspaceTitle').textContent = `${workspaces[workspaceName].emoji || '📁'} ${workspaceName}`;
-            
-            renderWorkspaceTabs();
-            renderTasks();
-            updateArchiveCount();
-        }
+            function switchToWorkspace(workspaceName) {
+                // Safety check - don't switch if workspace doesn't exist
+                if (!workspaces[workspaceName]) {
+                    console.error('Attempted to switch to non-existent workspace:', workspaceName);
+                    return;
+                }
+                
+                // Rest of existing function...
+                currentWorkspace = workspaceName;
+                localStorage.setItem('aiTaskTracker_currentWorkspace', currentWorkspace);
+                // ... etc
+            }
 
         function showWorkspaceModal() {
             document.getElementById('workspaceName').value = '';
@@ -3405,58 +3444,57 @@
             }
         }
 
-        function refreshFromFirebase() {
-                    if (!userDataRef || !currentUser) {
-                        alert('Not connected to sync service. Please log in again.');
-                        return;
-                    }
-                    
-                    // Show visual feedback that refresh is happening
-                    const refreshBtn = document.querySelector('button[onclick="refreshFromFirebase()"]');
-                    const originalText = refreshBtn.textContent;
-                    refreshBtn.textContent = '⏳ Refreshing...';
-                    refreshBtn.disabled = true;
-                    
-                    userDataRef.once('value').then(snapshot => {
-                        const data = snapshot.val();
-                        if (data && data.workspaces) {
-                            // Load fresh data from Firebase
-                            workspaces = data.workspaces;
-                            currentWorkspace = data.currentWorkspace || currentWorkspace;
-                            appName = data.appName || appName;
-                            workspaceOrder = data.workspaceOrder || Object.keys(workspaces);
-                            
-                            // Update the UI with fresh data
-                            renderWorkspaceTabs();
-                            switchToWorkspace(currentWorkspace);
-                            updateAppName();
-                            updateArchiveCount();
-                            
-                            // Show success feedback
-                            refreshBtn.textContent = '✅ Refreshed!';
-                            setTimeout(() => {
-                                refreshBtn.textContent = originalText;
-                                refreshBtn.disabled = false;
-                            }, 2000);
-                            
-                        } else {
-                            // No data found
-                            refreshBtn.textContent = '⚠️ No Data Found';
-                            alert('No data found on server. Your local data is preserved.');
-                            setTimeout(() => {
-                                refreshBtn.textContent = originalText;
-                                refreshBtn.disabled = false;
-                            }, 2000);
-                        }
-                    }).catch(error => {
-                        console.error('Firebase refresh error:', error);
-                        alert('Failed to refresh data from server. Please check your connection.');
+            function refreshFromFirebase() {
+                if (!firebase.auth().currentUser) {
+                    alert('Please log in first to refresh data from server.');
+                    return;
+                }
+                
+                if (!userDataRef) {
+                    userDataRef = database.ref(`users/${firebase.auth().currentUser.uid}`);
+                }
+                
+                const refreshBtn = document.querySelector('button[onclick="refreshFromFirebase()"]');
+                const originalText = refreshBtn.textContent;
+                refreshBtn.textContent = '⏳ Refreshing...';
+                refreshBtn.disabled = true;
+                
+                userDataRef.once('value').then(snapshot => {
+                    const data = snapshot.val();
+                    if (data && data.workspaces) {
+                        workspaces = data.workspaces;
+                        currentWorkspace = data.currentWorkspace || currentWorkspace;
+                        appName = data.appName || appName;
+                        workspaceOrder = data.workspaceOrder || Object.keys(workspaces);
                         
-                        // Reset button on error
+                        renderWorkspaceTabs();
+                        switchToWorkspace(currentWorkspace);
+                        updateAppName();
+                        updateArchiveCount();
+                        
+                        refreshBtn.textContent = '✅ Refreshed!';
+                        setTimeout(() => {
+                            refreshBtn.textContent = originalText;
+                            refreshBtn.disabled = false;
+                        }, 2000);
+                    } else {
+                        refreshBtn.textContent = '⚠️ No Data Found';
+                        alert('No data found on server. Your local data is preserved.');
+                        setTimeout(() => {
+                            refreshBtn.textContent = originalText;
+                            refreshBtn.disabled = false;
+                        }, 2000);
+                    }
+                }).catch(error => {
+                    console.error('Firebase refresh error:', error);
+                    refreshBtn.textContent = '❌ Failed';
+                    alert('Connection failed. Please check your internet connection.');
+                    setTimeout(() => {
                         refreshBtn.textContent = originalText;
                         refreshBtn.disabled = false;
-                    });
-                }
+                    }, 2000);
+                });
+            }
         
         function loadDataFromFirebase() {
             if (!userDataRef) return;
