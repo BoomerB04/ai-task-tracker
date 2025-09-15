@@ -1813,6 +1813,9 @@
         }
 
             function switchToWorkspace(workspaceName) {
+                console.log('switchToWorkspace called with:', workspaceName);
+                console.log('Current workspaces object:', workspaces);
+                console.log('Current currentWorkspace:', currentWorkspace);
                 // Safety check - don't switch if workspace doesn't exist
                 if (!workspaces[workspaceName]) {
                     console.error('Attempted to switch to non-existent workspace:', workspaceName);
@@ -3329,7 +3332,20 @@
         }
 
         function updateArchiveCount() {
-            document.getElementById('archive-count').textContent = getCurrentCompletedTasks().length;
+            try {
+                const completedTasks = getCurrentCompletedTasks();
+                const count = completedTasks ? completedTasks.length : 0;
+                const element = document.getElementById('archive-count');
+                if (element) {
+                    element.textContent = count;
+                }
+            } catch (error) {
+                console.error('Error in updateArchiveCount:', error);
+                const element = document.getElementById('archive-count');
+                if (element) {
+                    element.textContent = '0';
+                }
+            }
         }
 
         // Modal Management
@@ -3651,13 +3667,21 @@
             userDataRef.once('value').then(snapshot => {
                 const data = snapshot.val();
                 if (data && data.workspaces) {
-                    // Load data from Firebase
+                    // Load data from Firebase and ensure data integrity
                     workspaces = data.workspaces;
                     currentWorkspace = data.currentWorkspace || 'Work';
                     appName = data.appName || 'AI Task Tracker';
                     workspaceOrder = data.workspaceOrder || Object.keys(workspaces);
                     
-                    // Update UI
+                    // CRITICAL: Ensure all workspaces have required arrays
+                    Object.keys(workspaces).forEach(workspaceName => {
+                        const workspace = workspaces[workspaceName];
+                        if (!workspace.tasks) workspace.tasks = [];
+                        if (!workspace.completedTasks) workspace.completedTasks = [];
+                        if (!workspace.taskCategories) workspace.taskCategories = [];
+                    });
+                    
+                    // Now it's safe to update UI
                     renderWorkspaceTabs();
                     switchToWorkspace(currentWorkspace);
                     updateAppName();
@@ -3666,24 +3690,12 @@
                     setupRealtimeListener();
                 } else {
                     // No data in Firebase, use localStorage or defaults
-                    const localData = localStorage.getItem('aiTaskTracker_workspaces');
-                    if (localData) {
-                        workspaces = JSON.parse(localData);
-                    }
-                    const localOrder = localStorage.getItem('aiTaskTracker_workspaceOrder');
-                    if (localOrder) {
-                        workspaceOrder = JSON.parse(localOrder);
-                    }
-                    // Save current data to Firebase
-                    saveWorkspaces();
+                    loadLocalDataOnly();
                 }
             }).catch(error => {
                 console.error('Firebase load error:', error);
                 // Fall back to localStorage
-                const localData = localStorage.getItem('aiTaskTracker_workspaces');
-                if (localData) {
-                    workspaces = JSON.parse(localData);
-                }
+                loadLocalDataOnly();
             });
         }
 
