@@ -1392,6 +1392,61 @@
             </div>
         </div>
         
+        <!-- Login Modal -->
+        <div id="loginModal" class="modal">
+            <div class="modal-content">
+                <h3>Welcome to AI Task Tracker</h3>
+                <p style="margin-bottom: 20px; color: var(--text-secondary);">
+                    Sign in to sync your tasks across all devices, or continue using locally stored data.
+                </p>
+                
+                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <button class="btn btn-green" onclick="showLoginForm()" style="flex: 1;">
+                        🔐 Sign In
+                    </button>
+                    <button class="btn btn-primary" onclick="showSignUpForm()" style="flex: 1;">
+                        ➕ Create Account
+                    </button>
+                </div>
+                
+                <div id="loginForm" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" id="loginEmail" class="form-input" placeholder="your@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="password" id="loginPassword" class="form-input" placeholder="Your password">
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-green" onclick="signInWithForm()" style="flex: 1;">Sign In</button>
+                        <button class="btn btn-secondary" onclick="hideLoginForm()">Back</button>
+                    </div>
+                </div>
+                
+                <div id="signupForm" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" id="signupEmail" class="form-input" placeholder="your@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="password" id="signupPassword" class="form-input" placeholder="Create a password (6+ characters)">
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-primary" onclick="signUpWithForm()" style="flex: 1;">Create Account</button>
+                        <button class="btn btn-secondary" onclick="hideSignUpForm()">Back</button>
+                    </div>
+                </div>
+                
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="btn btn-secondary" onclick="continueWithoutLogin()" style="text-decoration: underline;">
+                        Continue without account (local storage only)
+                    </button>
+                </div>
+            </div>
+        </div>
+        
         <script>
 
         // Firebase Configuration
@@ -1411,37 +1466,47 @@
 
                 // Firebase Auth implementation
                 function promptForUsername() {
-                    // Check if user is already signed in
                     firebase.auth().onAuthStateChanged(function(user) {
                         if (user) {
                             // User is signed in
                             currentUser = user.uid;
                             userDataRef = database.ref(`users/${currentUser}`);
+                            showLoggedInState();
                             loadDataFromFirebase();
                         } else {
-                            // User is signed out, show login choice
-                            showAuthChoice();
+                            // User is signed out
+                            showLoggedOutState();
+                            loadLocalDataOnly();
                         }
                     });
                 }
 
                 function showLoggedInState() {
-                    // Show logout button, hide login button
-                    document.querySelector('[onclick="logOut()"]').style.display = 'flex';
+                    // Hide login button, show logout button
+                    const logoutBtn = document.querySelector('[onclick="logOut()"]');
+                    if (logoutBtn) logoutBtn.style.display = 'flex';
+                    
                     const loginBtn = document.getElementById('loginBtn');
                     if (loginBtn) loginBtn.style.display = 'none';
                 }
 
                 function showLoggedOutState() {
                     // Show login button, hide logout button
-                    document.querySelector('[onclick="logOut()"]').style.display = 'none';
+                    const logoutBtn = document.querySelector('[onclick="logOut()"]');
+                    if (logoutBtn) logoutBtn.style.display = 'none';
+                    
+                    // Create login button if it doesn't exist
                     if (!document.getElementById('loginBtn')) {
                         const loginBtn = document.createElement('button');
                         loginBtn.id = 'loginBtn';
                         loginBtn.className = 'btn btn-green';
                         loginBtn.innerHTML = '🔐 Log In / Sign Up';
-                        loginBtn.onclick = showAuthChoice;
-                        document.querySelector('.app-controls').insertBefore(loginBtn, document.querySelector('[onclick="logOut()"]'));
+                        loginBtn.onclick = showAuthModal;
+                        
+                        // Insert before logout button
+                        const controls = document.querySelector('.app-controls');
+                        const logoutBtn = document.querySelector('[onclick="logOut()"]');
+                        controls.insertBefore(loginBtn, logoutBtn);
                     }
                     document.getElementById('loginBtn').style.display = 'flex';
                 }
@@ -1454,7 +1519,7 @@
                     if (localData && Object.keys(workspaces).length === 0) {
                         workspaces = JSON.parse(localData);
                     }
-                    if (localOrder && workspaceOrder.length <= 2) {
+                    if (localOrder) {
                         workspaceOrder = JSON.parse(localOrder);
                     }
                     
@@ -1462,56 +1527,90 @@
                     renderTasks();
                     updateArchiveCount();
                 }
-                function showAuthChoice() {
-                    const choice = confirm('Do you have an account?\n\nClick "OK" to sign in\nClick "Cancel" to create account');
-                    
-                    if (choice) {
-                        showSignInForm();
-                    } else {
-                        showSignUpForm();
-                    }
+                function showAuthModal() {
+                    showModal('loginModal');
                 }
 
-                function showSignInForm() {
-                    const email = prompt('Enter your email:');
-                    if (!email) return;
-                    
-                    const password = prompt('Enter your password:');
-                    if (!password) return;
-                    
-                    firebase.auth().signInWithEmailAndPassword(email, password)
-                        .then((userCredential) => {
-                            // Success - auth state change will handle the rest
-                        })
-                        .catch((error) => {
-                            alert('Sign in failed: ' + error.message);
-                            if (error.code === 'auth/user-not-found') {
-                                const createAccount = confirm('Account not found. Create new account with this email?');
-                                if (createAccount) {
-                                    createAccountWithCredentials(email, password);
-                                }
-                            } else {
-                                showAuthChoice();
-                            }
-                        });
+                function showLoginForm() {
+                    document.getElementById('loginForm').style.display = 'block';
+                    document.getElementById('signupForm').style.display = 'none';
+                }
+
+                function showSignUpForm() {
+                    document.getElementById('signupForm').style.display = 'block';
+                    document.getElementById('loginForm').style.display = 'none';
+                }
+
+                function hideLoginForm() {
+                    document.getElementById('loginForm').style.display = 'none';
+                }
+
+                function hideSignUpForm() {
+                    document.getElementById('signupForm').style.display = 'none';
                 }
 
                 function showHelpModal() {
                     showModal('helpModal');
                 }
             
-                function showSignUpForm() {
-                    const email = prompt('Enter your email:');
-                    if (!email) return;
+                function signInWithForm() {
+                    const email = document.getElementById('loginEmail').value.trim();
+                    const password = document.getElementById('loginPassword').value;
                     
-                    const password = prompt('Create a password (6+ characters):');
-                    if (!password || password.length < 6) {
-                        alert('Password must be at least 6 characters');
-                        showSignUpForm();
+                    if (!email || !password) {
+                        alert('Please enter both email and password');
                         return;
                     }
                     
-                    createAccountWithCredentials(email, password);
+                    firebase.auth().signInWithEmailAndPassword(email, password)
+                        .then(() => {
+                            closeModal();
+                        })
+                        .catch((error) => {
+                            alert('Sign in failed: ' + error.message);
+                            if (error.code === 'auth/user-not-found') {
+                                if (confirm('Account not found. Create new account with this email?')) {
+                                    signUpWithForm();
+                                }
+                            }
+                        });
+                }
+
+                function signUpWithForm() {
+                    const email = document.getElementById('signupEmail').value.trim() || document.getElementById('loginEmail').value.trim();
+                    const password = document.getElementById('signupPassword').value || document.getElementById('loginPassword').value;
+                    
+                    if (!email || !password) {
+                        alert('Please enter both email and password');
+                        return;
+                    }
+                    
+                    if (password.length < 6) {
+                        alert('Password must be at least 6 characters');
+                        return;
+                    }
+                    
+                    firebase.auth().createUserWithEmailAndPassword(email, password)
+                        .then((userCredential) => {
+                            const initialData = {
+                                workspaces: workspaces,
+                                currentWorkspace: currentWorkspace,
+                                appName: appName,
+                                workspaceOrder: workspaceOrder,
+                                lastUpdated: Date.now()
+                            };
+                            
+                            const newUserRef = database.ref(`users/${userCredential.user.uid}`);
+                            newUserRef.set(initialData);
+                            closeModal();
+                        })
+                        .catch((error) => {
+                            alert('Account creation failed: ' + error.message);
+                        });
+                }
+
+                function continueWithoutLogin() {
+                    closeModal();
                 }
 
                 function createAccountWithCredentials(email, password) {
@@ -1720,10 +1819,15 @@
                     return;
                 }
                 
-                // Rest of existing function...
                 currentWorkspace = workspaceName;
                 localStorage.setItem('aiTaskTracker_currentWorkspace', currentWorkspace);
-                // ... etc
+                
+                showingArchive = false;
+                document.getElementById('workspaceTitle').textContent = `${workspaces[workspaceName].emoji || '📁'} ${workspaceName}`;
+                
+                renderWorkspaceTabs();
+                renderTasks();
+                updateArchiveCount();
             }
 
         function showWorkspaceModal() {
