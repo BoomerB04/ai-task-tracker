@@ -1072,6 +1072,7 @@
                     <button class="btn btn-purple" onclick="toggleCategoryManager()">📂 Categories</button>
                     <button class="btn btn-secondary" onclick="showFieldConfigModal()">⚙️ Fields</button>
                     <button class="btn btn-secondary" onclick="showDefaultsModal()">🎯 Defaults</button>
+                    <button class="btn btn-secondary" onclick="showGroupingModal()">📊 Grouping</button>
                     <button class="btn btn-secondary" onclick="toggleArchive()">🗄️ Archive (<span id="archive-count">0</span>)</button>
                     <button class="btn btn-primary" onclick="showAddModal()">➕ Add Task</button>
                 </div>
@@ -1388,6 +1389,25 @@
                         </div>
 
                     </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Grouping Configuration Modal -->
+        <div id="groupingConfigModal" class="modal">
+            <div class="modal-content">
+                <h3>Configure Grouping for <span id="groupingWorkspaceName"></span></h3>
+                <div style="margin-bottom: 20px; color: var(--text-secondary); font-size: 14px;">
+                    Choose how to group and sort your tasks in this workspace.
+                </div>
+                
+                <div id="groupingConfigList">
+                    <!-- Populated dynamically -->
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 24px;">
+                    <button class="btn btn-green" onclick="saveGroupingConfig()" style="flex: 1;">Save Changes</button>
+                    <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
                 </div>
             </div>
         </div>
@@ -2192,6 +2212,117 @@
             closeModal();
         }
 
+// Add grouping configuration modal
+        function showGroupingModal() {
+            const workspaceName = currentWorkspace;
+            document.getElementById('groupingWorkspaceName').textContent = workspaceName;
+            renderGroupingConfig();
+            showModal('groupingConfigModal');
+        }
+
+        function renderGroupingConfig() {
+            const workspace = getCurrentWorkspace();
+            const enabledFields = getCurrentEnabledFields();
+            const groupingSettings = workspace.groupingSettings || {
+                groupBy: 'dueDate',
+                sortBy: 'priority',
+                sortOrder: 'asc'
+            };
+            
+            const container = document.getElementById('groupingConfigList');
+            
+            let groupingOptions = [];
+            
+            if (enabledFields.dueDate) {
+                groupingOptions.push({ value: 'dueDate', label: 'Due Date' });
+            }
+            if (enabledFields.priorityLowHigh && !enabledFields.priorityP0P3) {
+                groupingOptions.push(
+                    { value: 'priorityLowHigh', label: 'Priority: Critical → Low' },
+                    { value: 'priorityLowHighReverse', label: 'Priority: Low → Critical' }
+                );
+            }
+            if (enabledFields.priorityP0P3 && !enabledFields.priorityLowHigh) {
+                groupingOptions.push(
+                    { value: 'priorityP0P3', label: 'Priority: P0 → P3' },
+                    { value: 'priorityP0P3Reverse', label: 'Priority: P3 → P0' }
+                );
+            }
+            if (enabledFields.priorityLowHigh && enabledFields.priorityP0P3) {
+                groupingOptions.push(
+                    { value: 'priorityLowHigh', label: 'Priority: Critical → Low' },
+                    { value: 'priorityLowHighReverse', label: 'Priority: Low → Critical' },
+                    { value: 'priorityP0P3', label: 'Priority: P0 → P3' },
+                    { value: 'priorityP0P3Reverse', label: 'Priority: P3 → P0' }
+                );
+            }
+            if (enabledFields.timeEstimate) {
+                groupingOptions.push({ value: 'timeEstimate', label: 'Time Estimate' });
+            }
+            if (enabledFields.categories) {
+                groupingOptions.push(
+                    { value: 'categories', label: 'Categories: A → Z' },
+                    { value: 'categoriesReverse', label: 'Categories: Z → A' }
+                );
+            }
+            
+            let sortingOptions = [];
+            if (enabledFields.priorityLowHigh || enabledFields.priorityP0P3) {
+                sortingOptions.push({ value: 'priority', label: 'Priority' });
+            }
+            if (enabledFields.categories) {
+                sortingOptions.push({ value: 'category', label: 'Category' });
+            }
+            if (enabledFields.timeEstimate) {
+                sortingOptions.push({ value: 'timeEstimate', label: 'Time Estimate' });
+            }
+            sortingOptions.push({ value: 'name', label: 'Task Name' });
+            
+            const html = `
+                <div class="form-group">
+                    <label class="form-label">Group Tasks By</label>
+                    <select id="grouping-groupBy" class="form-select">
+                        ${groupingOptions.map(opt => 
+                            `<option value="${opt.value}" ${groupingSettings.groupBy === opt.value ? 'selected' : ''}>${opt.label}</option>`
+                        ).join('')}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Sort Within Groups By</label>
+                    <select id="grouping-sortBy" class="form-select">
+                        ${sortingOptions.map(opt => 
+                            `<option value="${opt.value}" ${groupingSettings.sortBy === opt.value ? 'selected' : ''}>${opt.label}</option>`
+                        ).join('')}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Sort Order</label>
+                    <select id="grouping-sortOrder" class="form-select">
+                        <option value="asc" ${groupingSettings.sortOrder === 'asc' ? 'selected' : ''}>Ascending</option>
+                        <option value="desc" ${groupingSettings.sortOrder === 'desc' ? 'selected' : ''}>Descending</option>
+                    </select>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+        }
+
+        function saveGroupingConfig() {
+            const workspace = getCurrentWorkspace();
+            const groupingSettings = {
+                groupBy: document.getElementById('grouping-groupBy').value,
+                sortBy: document.getElementById('grouping-sortBy').value,
+                sortOrder: document.getElementById('grouping-sortOrder').value
+            };
+            
+            workspace.groupingSettings = groupingSettings;
+            saveWorkspaces();
+            renderTasks(); // Refresh with new grouping
+            closeModal();
+        }
+            
         function applyFieldDefaults() {
             const workspace = getCurrentWorkspace();
             const defaults = workspace.fieldDefaults || {};
@@ -2386,6 +2517,7 @@
                 const enabledFields = getCurrentEnabledFields();
                 const missingFields = [];
 
+                // Only check for missing fields if they're actually enabled AND required
                 if (enabledFields.dueDate && (!taskData.dueDate || taskData.dueDate === getTodayDateString())) {
                     missingFields.push('due date');
                 }
@@ -2396,11 +2528,12 @@
                     missingFields.push('category');
                 }
                 
+                // FIXED: Only show modal if there are missing fields AND they're enabled
                 if (missingFields.length > 0) {
                     // Show modal with pre-filled data and missing field indicators
                     showTaskModalWithData(taskData, missingFields);
                 } else {
-                    // All fields captured, add directly
+                    // All fields captured or disabled, add directly
                     addTaskDirectly(taskData);
                 }
                 
@@ -2837,55 +2970,271 @@
         }
 
         // Date categorization
-        function categorizeTasksByDate(taskList) {
-            const now = new Date();
-            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            
-            const dayOfWeek = today.getDay();
-            const daysUntilFriday = dayOfWeek <= 5 ? 5 - dayOfWeek : 0;
-            const thisFriday = new Date(today);
-            thisFriday.setDate(today.getDate() + daysUntilFriday);
-            
-            const nextFriday = new Date(thisFriday);
-            nextFriday.setDate(thisFriday.getDate() + 7);
-
-            const categories = {
-                overdue: [],
-                today: [],
-                thisWeek: [],
-                nextWeek: [],
-                future: []
-            };
-
-            taskList.forEach(task => {
-                const [month, day] = task.dueDate.split('/').map(n => parseInt(n));
-                const taskDate = new Date(now.getFullYear(), month - 1, day);
-
-                if (taskDate < today) {
-                    categories.overdue.push(task);
-                } else if (taskDate.getTime() === today.getTime()) {
-                    categories.today.push(task);
-                } else if (taskDate <= thisFriday) {
-                    categories.thisWeek.push(task);
-                } else if (taskDate <= nextFriday) {
-                    categories.nextWeek.push(task);
-                } else {
-                    categories.future.push(task);
+        function categorizeTasksByGrouping(taskList) {
+                    const workspace = getCurrentWorkspace();
+                    const groupingSettings = workspace.groupingSettings || { groupBy: 'dueDate', sortBy: 'priority', sortOrder: 'asc' };
+                    
+                    let categories = {};
+                    
+                    switch (groupingSettings.groupBy) {
+                        case 'dueDate':
+                            categories = categorizeByDate(taskList);
+                            break;
+                        case 'priorityLowHigh':
+                            categories = categorizeByPriority(taskList, ['Critical', 'High', 'Medium', 'Low']);
+                            break;
+                        case 'priorityLowHighReverse':
+                            categories = categorizeByPriority(taskList, ['Low', 'Medium', 'High', 'Critical']);
+                            break;
+                        case 'priorityP0P3':
+                            categories = categorizeByPriority(taskList, ['P0', 'P1', 'P2', 'P3']);
+                            break;
+                        case 'priorityP0P3Reverse':
+                            categories = categorizeByPriority(taskList, ['P3', 'P2', 'P1', 'P0']);
+                            break;
+                        case 'timeEstimate':
+                            categories = categorizeByTimeEstimate(taskList);
+                            break;
+                        case 'categories':
+                            categories = categorizeByCategory(taskList, false);
+                            break;
+                        case 'categoriesReverse':
+                            categories = categorizeByCategory(taskList, true);
+                            break;
+                        default:
+                            categories = categorizeByDate(taskList);
+                    }
+                    
+                    // Sort within each category
+                    Object.keys(categories).forEach(categoryKey => {
+                        categories[categoryKey] = sortTasksWithinGroup(categories[categoryKey], groupingSettings.sortBy, groupingSettings.sortOrder);
+                    });
+                    
+                    return categories;
                 }
-            });
 
-            // Sort by priority within each category
-            Object.keys(categories).forEach(category => {
-                categories[category].sort((a, b) => {
-                    const priorityA = parseInt(a.priority.substring(1));
-                    const priorityB = parseInt(b.priority.substring(1));
-                    return priorityA - priorityB;
-                });
-            });
+            function categorizeByDate(taskList) {
+                        const now = new Date();
+                        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                        
+                        const dayOfWeek = today.getDay();
+                        const daysUntilFriday = dayOfWeek <= 5 ? 5 - dayOfWeek : 0;
+                        const thisFriday = new Date(today);
+                        thisFriday.setDate(today.getDate() + daysUntilFriday);
+                        
+                        const nextFriday = new Date(thisFriday);
+                        nextFriday.setDate(thisFriday.getDate() + 7);
 
-            return categories;
-        }
+                        const categories = {
+                            overdue: [],
+                            today: [],
+                            thisWeek: [],
+                            nextWeek: [],
+                            future: []
+                        };
 
+                        taskList.forEach(task => {
+                            const [month, day] = task.dueDate.split('/').map(n => parseInt(n));
+                            const taskDate = new Date(now.getFullYear(), month - 1, day);
+
+                            if (taskDate < today) {
+                                categories.overdue.push(task);
+                            } else if (taskDate.getTime() === today.getTime()) {
+                                categories.today.push(task);
+                            } else if (taskDate <= thisFriday) {
+                                categories.thisWeek.push(task);
+                            } else if (taskDate <= nextFriday) {
+                                categories.nextWeek.push(task);
+                            } else {
+                                categories.future.push(task);
+                            }
+                        });
+
+                        return categories;
+                    }
+
+                    function categorizeByPriority(taskList, priorityOrder) {
+                        const categories = {};
+                        priorityOrder.forEach(priority => {
+                            categories[priority.toLowerCase().replace(/\s+/g, '-')] = [];
+                        });
+                        categories['no-priority'] = [];
+                        
+                        taskList.forEach(task => {
+                            const priority = task.priority || 'No Priority';
+                            let key = 'no-priority';
+                            
+                            priorityOrder.forEach(p => {
+                                if (priority === p) {
+                                    key = p.toLowerCase().replace(/\s+/g, '-');
+                                }
+                            });
+                            
+                            categories[key].push(task);
+                        });
+                        
+                        return categories;
+                    }
+
+                    function categorizeByTimeEstimate(taskList) {
+                        const categories = {
+                            'quick': [], // 0-15 mins
+                            'short': [], // 15-30 mins
+                            'medium': [], // 30-60 mins
+                            'long': [], // 60-120 mins
+                            'extended': [] // >120 mins
+                        };
+                        
+                        taskList.forEach(task => {
+                            const time = task.timeEstimate || 60;
+                            if (time <= 15) {
+                                categories.quick.push(task);
+                            } else if (time <= 30) {
+                                categories.short.push(task);
+                            } else if (time <= 60) {
+                                categories.medium.push(task);
+                            } else if (time <= 120) {
+                                categories.long.push(task);
+                            } else {
+                                categories.extended.push(task);
+                            }
+                        });
+                        
+                        return categories;
+                    }
+
+                    function categorizeByCategory(taskList, reverse = false) {
+                        const categories = {};
+                        const categorySet = new Set();
+                        
+                        // Collect all categories
+                        taskList.forEach(task => {
+                            const category = task.taskCategory || 'General';
+                            categorySet.add(category);
+                        });
+                        
+                        // Sort categories
+                        const sortedCategories = Array.from(categorySet).sort();
+                        if (reverse) sortedCategories.reverse();
+                        
+                        // Initialize categories
+                        sortedCategories.forEach(category => {
+                            categories[category.toLowerCase().replace(/\s+/g, '-')] = [];
+                        });
+                        
+                        // Distribute tasks
+                        taskList.forEach(task => {
+                            const category = task.taskCategory || 'General';
+                            const key = category.toLowerCase().replace(/\s+/g, '-');
+                            if (categories[key]) {
+                                categories[key].push(task);
+                            }
+                        });
+                        
+                        return categories;
+                    }
+
+                    function sortTasksWithinGroup(tasks, sortBy, sortOrder) {
+                        return tasks.sort((a, b) => {
+                            let aValue, bValue;
+                            
+                            switch (sortBy) {
+                                case 'priority':
+                                    aValue = getPriorityValue(a.priority);
+                                    bValue = getPriorityValue(b.priority);
+                                    break;
+                                case 'category':
+                                    aValue = a.taskCategory || 'General';
+                                    bValue = b.taskCategory || 'General';
+                                    break;
+                                case 'timeEstimate':
+                                    aValue = a.timeEstimate || 0;
+                                    bValue = b.timeEstimate || 0;
+                                    break;
+                                case 'name':
+                                default:
+                                    aValue = a.name.toLowerCase();
+                                    bValue = b.name.toLowerCase();
+                                    break;
+                            }
+                            
+                            if (sortOrder === 'desc') {
+                                [aValue, bValue] = [bValue, aValue];
+                            }
+                            
+                            if (typeof aValue === 'string') {
+                                return aValue.localeCompare(bValue);
+                            }
+                            return aValue - bValue;
+                        });
+                    }
+
+                    function getPriorityValue(priority) {
+                        const priorityMap = {
+                            'P0': 0, 'Critical': 0,
+                            'P1': 1, 'High': 1,
+                            'P2': 2, 'Medium': 2,
+                            'P3': 3, 'Low': 3
+                        };
+                        return priorityMap[priority] || 999;
+                    }
+
+                    function getSectionConfig(groupBy, categorized) {
+                        switch (groupBy) {
+                            case 'dueDate':
+                                return [
+                                    { key: 'overdue', title: 'Overdue', class: 'overdue' },
+                                    { key: 'today', title: 'Today', class: 'today' },
+                                    { key: 'thisWeek', title: 'This Week', class: 'this-week' },
+                                    { key: 'nextWeek', title: 'Next Week', class: 'next-week' },
+                                    { key: 'future', title: 'Future', class: 'future' }
+                                ];
+                            case 'priorityLowHigh':
+                                return [
+                                    { key: 'critical', title: 'Critical', class: 'overdue' },
+                                    { key: 'high', title: 'High', class: 'today' },
+                                    { key: 'medium', title: 'Medium', class: 'this-week' },
+                                    { key: 'low', title: 'Low', class: 'future' }
+                                ];
+                            case 'priorityLowHighReverse':
+                                return [
+                                    { key: 'low', title: 'Low', class: 'future' },
+                                    { key: 'medium', title: 'Medium', class: 'this-week' },
+                                    { key: 'high', title: 'High', class: 'today' },
+                                    { key: 'critical', title: 'Critical', class: 'overdue' }
+                                ];
+                            case 'priorityP0P3':
+                                return [
+                                    { key: 'p0', title: 'P0 - Critical', class: 'overdue' },
+                                    { key: 'p1', title: 'P1 - High', class: 'today' },
+                                    { key: 'p2', title: 'P2 - Medium', class: 'this-week' },
+                                    { key: 'p3', title: 'P3 - Low', class: 'future' }
+                                ];
+                            case 'priorityP0P3Reverse':
+                                return [
+                                    { key: 'p3', title: 'P3 - Low', class: 'future' },
+                                    { key: 'p2', title: 'P2 - Medium', class: 'this-week' },
+                                    { key: 'p1', title: 'P1 - High', class: 'today' },
+                                    { key: 'p0', title: 'P0 - Critical', class: 'overdue' }
+                                ];
+                            case 'timeEstimate':
+                                return [
+                                    { key: 'quick', title: '0-15 minutes', class: 'today' },
+                                    { key: 'short', title: '15-30 minutes', class: 'this-week' },
+                                    { key: 'medium', title: '30-60 minutes', class: 'next-week' },
+                                    { key: 'long', title: '60-120 minutes', class: 'future' },
+                                    { key: 'extended', title: '2+ hours', class: 'overdue' }
+                                ];
+                            default:
+                                // For categories or other groupings, dynamically generate sections
+                                return Object.keys(categorized).map(key => ({
+                                    key: key,
+                                    title: key.charAt(0).toUpperCase() + key.slice(1).replace(/-/g, ' '),
+                                    class: 'this-week'
+                                }));
+                        }
+                    }
+            
         // Rendering
         function renderTasks() {
             const container = document.getElementById('taskSections');
@@ -2904,15 +3253,12 @@
             }
 
             emptyState.style.display = 'none';
-            const categorized = categorizeTasksByDate(tasks);
+            const categorized = categorizeTasksByGrouping(tasks);
             
-            const sections = [
-                { key: 'overdue', title: 'Overdue', class: 'overdue' },
-                { key: 'today', title: 'Today', class: 'today' },
-                { key: 'thisWeek', title: 'This Week', class: 'this-week' },
-                { key: 'nextWeek', title: 'Next Week', class: 'next-week' },
-                { key: 'future', title: 'Future', class: 'future' }
-            ];
+            const workspace = getCurrentWorkspace();
+                        const groupingSettings = workspace.groupingSettings || { groupBy: 'dueDate' };
+                        
+                        let sections = getSectionConfig(groupingSettings.groupBy, categorized);
 
             let html = '';
             sections.forEach(section => {
